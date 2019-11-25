@@ -6,5 +6,5 @@ The test example solves a linear elsatic plate with a whole of radius 1mm subjec
 
     python main.py
 
-#Documentation
+# Documentation
 HTML sphynx doc was built in docs/_build/html folder. Open index.html to access the whole documentation.
