@@ -1,0 +1,165 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>make_holeplate &#8212; pythonIGA 1 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for make_holeplate</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Functions to solve the plate with a whole problem.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">assembly</span> <span class="k">import</span> <span class="n">make_KF</span><span class="p">,</span> <span class="n">impose_BC</span>
+<span class="kn">from</span> <span class="nn">connec_mat</span> <span class="k">import</span> <span class="n">make_IEN_INC</span><span class="p">,</span> <span class="n">make_IEN_INC_BC</span>
+<span class="kn">from</span> <span class="nn">impose_pres</span> <span class="k">import</span> <span class="n">compute_Fimp_alt</span>
+<span class="kn">from</span> <span class="nn">make_geom</span> <span class="k">import</span> <span class="n">build_BC_surf</span>
+<span class="kn">from</span> <span class="nn">meshOpener</span> <span class="k">import</span> <span class="n">load_geom</span>
+<span class="kn">from</span> <span class="nn">mesh_rule</span> <span class="k">import</span> <span class="n">Gauss_rule</span>
+<span class="kn">from</span> <span class="nn">plotNurb</span> <span class="k">import</span> <span class="n">plot_nurbs</span>
+<span class="kn">from</span> <span class="nn">solve</span> <span class="k">import</span> <span class="n">solve_KU</span>
+
+
+<div class="viewcode-block" id="make_holeplate"><a class="viewcode-back" href="../index.html#make_holeplate.make_holeplate">[docs]</a><span class="k">def</span> <span class="nf">make_holeplate</span><span class="p">(</span><span class="n">numrefine</span><span class="p">,</span> <span class="n">disp_solve</span><span class="p">,</span> <span class="n">plotGrid</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Solve the plate with hole problem with linear elasticity</span>
+<span class="sd">    :param numrefine: Refined mesh number to use</span>
+<span class="sd">    :param dispSolve: Boolean, activate the result display</span>
+<span class="sd">    :param plotGrid: &quot;mesh&quot; to superimpose the mesh to the results</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;------------------- Building geometry...&quot;</span><span class="p">)</span>
+    <span class="n">knotvector_u</span><span class="p">,</span> <span class="n">knotvector_v</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">nobU</span><span class="p">,</span> <span class="n">nobV</span><span class="p">,</span> <span class="n">ctrlpts</span> <span class="o">=</span> <span class="n">load_geom</span><span class="p">(</span><span class="s2">&quot;meshes/mesh&quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">numrefine</span><span class="p">))</span>
+    <span class="n">L</span> <span class="o">=</span> <span class="mi">4</span>
+    <span class="n">R</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">knotvector_u</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">p</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">knotvector_v</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">q</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;------------------- Building connectivity matrices&quot;</span><span class="p">)</span>
+    <span class="n">INC</span><span class="p">,</span> <span class="n">IEN</span> <span class="o">=</span> <span class="n">make_IEN_INC</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">q</span><span class="p">)</span>
+    <span class="n">BC_ctrlpts</span><span class="p">,</span> <span class="n">BC_knot</span><span class="p">,</span> <span class="n">BC_corres</span> <span class="o">=</span> <span class="n">build_BC_surf</span><span class="p">(</span><span class="n">knotvector_u</span><span class="p">,</span> <span class="n">ctrlpts</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;------------------- Generate Gauss quadrature points&quot;</span><span class="p">)</span>
+    <span class="n">nquad</span> <span class="o">=</span> <span class="mi">4</span>
+    <span class="n">gp</span><span class="p">,</span> <span class="n">gw</span> <span class="o">=</span> <span class="n">Gauss_rule</span><span class="p">(</span><span class="n">nquad</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;------------------- Assemble K and F matrix&quot;</span><span class="p">)</span>
+    <span class="n">E_coeff</span> <span class="o">=</span> <span class="mf">200000.</span>
+    <span class="n">nu_coeff</span> <span class="o">=</span> <span class="mf">0.3</span>
+    <span class="n">nen</span> <span class="o">=</span> <span class="n">ctrlpts</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">ctrlpts</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">Fb</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">nen</span><span class="p">)</span>
+    <span class="n">nel</span> <span class="o">=</span> <span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="n">p</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">m</span><span class="o">-</span><span class="n">q</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Number of elements: &quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">nel</span><span class="p">))</span>
+    <span class="n">nobU</span> <span class="o">=</span> <span class="n">ctrlpts</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">nobV</span> <span class="o">=</span> <span class="n">ctrlpts</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">K</span><span class="p">,</span> <span class="n">F</span><span class="p">,</span> <span class="n">GP_coord</span> <span class="o">=</span> <span class="n">make_KF</span><span class="p">(</span><span class="n">knotvector_u</span><span class="p">,</span> <span class="n">knotvector_v</span><span class="p">,</span> <span class="n">ctrlpts</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">nel</span><span class="p">,</span> <span class="n">INC</span><span class="p">,</span> <span class="n">IEN</span><span class="p">,</span> <span class="n">gp</span><span class="p">,</span> <span class="n">gw</span><span class="p">,</span> <span class="n">nquad</span><span class="p">,</span> <span class="n">E_coeff</span><span class="p">,</span> <span class="n">nu_coeff</span><span class="p">,</span> <span class="n">Fb</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;------------------- Assemble boundary conditions&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Dirichlet...&quot;</span><span class="p">)</span>
+    <span class="n">Ub</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">nobV</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">nobU</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">ctrlpts</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mf">0.</span><span class="p">:</span>
+                <span class="n">Ub</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="mi">2</span><span class="o">*</span><span class="p">(</span><span class="n">j</span><span class="o">*</span><span class="n">nobU</span><span class="o">+</span><span class="n">i</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">0.</span><span class="p">])</span>
+            <span class="c1"># if ctrlpts[i,j,0] == -L:</span>
+            <span class="c1">#     Ub.append([2*(j*nobU+i), 0, -0.01])</span>
+            <span class="c1"># if ctrlpts[i,j,1] == L:</span>
+            <span class="c1">#     Ub.append([2*(j*nobU+i), 1, 0.01])</span>
+            <span class="k">if</span> <span class="n">ctrlpts</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">Ub</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="mi">2</span><span class="o">*</span><span class="p">(</span><span class="n">j</span><span class="o">*</span><span class="n">nobU</span><span class="o">+</span><span class="n">i</span><span class="p">),</span> <span class="mi">1</span><span class="p">,</span> <span class="mf">0.</span><span class="p">])</span>
+    <span class="n">Ub</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">Ub</span><span class="p">)</span>
+    <span class="n">method</span> <span class="o">=</span> <span class="s2">&quot;reduce&quot;</span>
+    <span class="n">F</span><span class="p">,</span> <span class="n">Ub_vect</span><span class="p">,</span> <span class="n">free_dofs</span><span class="p">,</span> <span class="n">fixed_dofs</span> <span class="o">=</span> <span class="n">impose_BC</span><span class="p">(</span><span class="n">Ub</span><span class="p">,</span> <span class="n">K</span><span class="p">,</span> <span class="n">F</span><span class="p">,</span> <span class="n">method</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Pressure...&quot;</span><span class="p">)</span>
+    <span class="n">n_BC</span> <span class="o">=</span> <span class="n">BC_ctrlpts</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">INC_BC</span><span class="p">,</span> <span class="n">IEN_BC</span> <span class="o">=</span> <span class="n">make_IEN_INC_BC</span><span class="p">(</span><span class="n">n_BC</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
+    <span class="n">nel_BC</span> <span class="o">=</span> <span class="n">n_BC</span> <span class="o">-</span> <span class="n">p</span>
+    <span class="n">toImpose</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_BC</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">BC_ctrlpts</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="o">-</span><span class="n">L</span><span class="p">:</span>
+            <span class="n">toImpose</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+
+    <span class="n">sig_imp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matrix</span><span class="p">([[</span><span class="o">-</span><span class="mi">10</span><span class="p">,</span> <span class="mf">0.</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">]])</span>
+    <span class="n">compute_Fimp_alt</span><span class="p">(</span><span class="n">nel_BC</span><span class="p">,</span> <span class="n">IEN_BC</span><span class="p">,</span> <span class="n">INC_BC</span><span class="p">,</span> <span class="n">gp</span><span class="p">,</span> <span class="n">gw</span><span class="p">,</span> <span class="n">BC_knot</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">BC_ctrlpts</span><span class="p">,</span> <span class="n">ctrlpts</span><span class="p">,</span> <span class="n">BC_corres</span><span class="p">,</span> <span class="n">nquad</span><span class="p">,</span> <span class="n">sig_imp</span><span class="p">,</span> <span class="n">F</span><span class="p">,</span> <span class="n">toImpose</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;------------------- Solving system (get a cup of coffee ;) )&quot;</span><span class="p">)</span>
+    <span class="n">u</span><span class="p">,</span> <span class="n">f_rea</span> <span class="o">=</span> <span class="n">solve_KU</span><span class="p">(</span><span class="n">K</span><span class="p">,</span> <span class="n">F</span><span class="p">,</span> <span class="n">free_dofs</span><span class="p">,</span> <span class="n">fixed_dofs</span><span class="p">,</span> <span class="n">Ub_vect</span><span class="p">,</span> <span class="n">nen</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;reduce&quot;</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;------------------- Plotting results&quot;</span><span class="p">)</span>
+    <span class="n">to_plot</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;u_x&quot;</span><span class="p">:</span> <span class="n">u</span><span class="p">[</span><span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">u</span><span class="p">),</span> <span class="mi">2</span><span class="p">)],</span> <span class="s2">&quot;u_y&quot;</span><span class="p">:</span> <span class="n">u</span><span class="p">[</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">u</span><span class="p">),</span> <span class="mi">2</span><span class="p">)]}</span>
+    <span class="n">plot_nurbs</span><span class="p">(</span><span class="n">ctrlpts</span><span class="p">,</span> <span class="n">knotvector_u</span><span class="p">,</span> <span class="n">knotvector_v</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">GP_coord</span><span class="p">,</span> <span class="n">nel</span><span class="p">,</span> <span class="n">IEN</span><span class="p">,</span> <span class="n">to_plot</span><span class="p">,</span> <span class="n">plotGrid</span><span class="p">,</span> <span class="n">E_coeff</span><span class="p">,</span> <span class="n">nu_coeff</span><span class="p">,</span> <span class="n">disp_solve</span><span class="p">,</span> <span class="n">numrefine</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, S.Breumier, O.Lampron.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.7</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.8</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

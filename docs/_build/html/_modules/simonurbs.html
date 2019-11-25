@@ -1,0 +1,263 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>simonurbs &#8212; pythonIGA 1 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for simonurbs</h1><div class="highlight"><pre>
+<span></span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">Functions to compute NURBS shape function values</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+
+<div class="viewcode-block" id="compRval"><a class="viewcode-back" href="../index.html#simonurbs.compRval">[docs]</a><span class="k">def</span> <span class="nf">compRval</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="n">xi</span><span class="p">,</span> <span class="n">eta</span><span class="p">,</span> <span class="n">ctrlpts</span><span class="p">,</span> <span class="n">knotvector_u</span><span class="p">,</span> <span class="n">knotvector_v</span><span class="p">,</span> <span class="n">degree_u</span><span class="p">,</span> <span class="n">degree_v</span><span class="p">,</span> <span class="n">weights</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Interpolate a field value at a given point using the NURBS shape function</span>
+<span class="sd">    :param param: field values at the control points</span>
+<span class="sd">    :param xi, eta: parametric coordinate where to compute the field</span>
+<span class="sd">    :param ctrlpts: control points</span>
+<span class="sd">    :param knotvector_u, knotvector_v: knot vectors in u and v direction</span>
+<span class="sd">    :param degree_u, degree_v: degrees in u and v directions</span>
+<span class="sd">    :param weights: weight vector for eqch control point</span>
+<span class="sd">    :return: float field value</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">tableSpanU</span> <span class="o">=</span> <span class="n">lookuptablespan</span><span class="p">(</span><span class="n">knotvector_u</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">knotvector_u</span><span class="p">),</span> <span class="p">[</span><span class="n">xi</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">tableSpanV</span> <span class="o">=</span> <span class="n">lookuptablespan</span><span class="p">(</span><span class="n">knotvector_v</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">knotvector_v</span><span class="p">),</span> <span class="p">[</span><span class="n">eta</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1"># initialize data matrix C</span>
+    <span class="n">nobU</span> <span class="o">=</span> <span class="n">ctrlpts</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">nobV</span> <span class="o">=</span> <span class="n">ctrlpts</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">C</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nobU</span><span class="p">,</span> <span class="n">nobV</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="n">dC_dxi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nobU</span><span class="p">,</span> <span class="n">nobV</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="n">dC_deta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nobU</span><span class="p">,</span> <span class="n">nobV</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="n">weightmatrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="p">(</span><span class="n">nobU</span><span class="p">,</span> <span class="n">nobV</span><span class="p">))</span>
+
+    <span class="n">startX</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">tableSpanU</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">tableSpanU</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">startY</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">tableSpanV</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">tableSpanV</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="n">entryU</span> <span class="o">=</span> <span class="n">BasisFun</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">tableSpanU</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">xi</span><span class="p">,</span> <span class="n">degree_u</span><span class="p">,</span> <span class="n">knotvector_u</span><span class="p">)</span>
+    <span class="n">entryV</span> <span class="o">=</span> <span class="n">BasisFun</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">tableSpanV</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">eta</span><span class="p">,</span> <span class="n">degree_v</span><span class="p">,</span> <span class="n">knotvector_v</span><span class="p">)</span>
+    <span class="n">entryUder</span> <span class="o">=</span> <span class="n">BasisFunDers</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">tableSpanU</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">xi</span><span class="p">,</span> <span class="n">degree_u</span><span class="p">,</span> <span class="n">knotvector_u</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">entryVder</span> <span class="o">=</span> <span class="n">BasisFunDers</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">tableSpanV</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">eta</span><span class="p">,</span> <span class="n">degree_v</span><span class="p">,</span> <span class="n">knotvector_v</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">localweights</span> <span class="o">=</span> <span class="n">weightmatrix</span><span class="p">[</span><span class="n">startX</span><span class="p">:</span><span class="n">startX</span> <span class="o">+</span> <span class="n">degree_u</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">startY</span><span class="p">:</span><span class="n">startY</span> <span class="o">+</span> <span class="n">degree_v</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="n">NM</span> <span class="o">=</span> <span class="p">(</span><span class="n">entryU</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span> <span class="o">*</span> <span class="n">entryV</span><span class="p">)</span>
+    <span class="n">dNM</span> <span class="o">=</span> <span class="p">(</span><span class="n">entryUder</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span> <span class="o">*</span> <span class="n">entryVder</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:])</span>
+    <span class="n">NdM</span> <span class="o">=</span> <span class="p">(</span><span class="n">entryUder</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:]</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span> <span class="o">*</span> <span class="n">entryVder</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="p">:])</span>
+
+    <span class="n">wNM</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">NM</span><span class="p">,</span> <span class="n">localweights</span><span class="p">)</span>
+    <span class="n">wdNM</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">dNM</span><span class="p">,</span> <span class="n">localweights</span><span class="p">)</span>
+    <span class="n">wNdM</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">NdM</span><span class="p">,</span> <span class="n">localweights</span><span class="p">)</span>
+
+    <span class="n">W</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">wNM</span><span class="p">)</span>
+    <span class="n">WprimedNM</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">wdNM</span><span class="p">)</span>
+    <span class="n">WprimeNdM</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">wNdM</span><span class="p">)</span>
+
+    <span class="n">numeratordNM</span> <span class="o">=</span> <span class="n">W</span> <span class="o">*</span> <span class="n">wdNM</span> <span class="o">-</span> <span class="n">WprimedNM</span> <span class="o">*</span> <span class="n">wNM</span>
+    <span class="n">numeratorNdM</span> <span class="o">=</span> <span class="n">W</span> <span class="o">*</span> <span class="n">wNdM</span> <span class="o">-</span> <span class="n">WprimeNdM</span> <span class="o">*</span> <span class="n">wNM</span>
+    <span class="k">for</span> <span class="n">iU</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">degree_u</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">iV</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">degree_v</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">C</span><span class="p">[</span><span class="n">startX</span> <span class="o">+</span> <span class="n">iU</span><span class="p">,</span> <span class="n">startY</span> <span class="o">+</span> <span class="n">iV</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">wNM</span><span class="p">[</span><span class="n">iU</span><span class="p">,</span> <span class="n">iV</span><span class="p">]</span> <span class="o">/</span> <span class="n">W</span>
+            <span class="n">dC_dxi</span><span class="p">[</span><span class="n">startX</span> <span class="o">+</span> <span class="n">iU</span><span class="p">,</span> <span class="n">startY</span> <span class="o">+</span> <span class="n">iV</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">numeratordNM</span><span class="p">[</span><span class="n">iU</span><span class="p">,</span> <span class="n">iV</span><span class="p">]</span> <span class="o">/</span> <span class="n">W</span> <span class="o">**</span> <span class="mi">2</span>
+            <span class="n">dC_deta</span><span class="p">[</span><span class="n">startX</span> <span class="o">+</span> <span class="n">iU</span><span class="p">,</span> <span class="n">startY</span> <span class="o">+</span> <span class="n">iV</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">numeratorNdM</span><span class="p">[</span><span class="n">iU</span><span class="p">,</span> <span class="n">iV</span><span class="p">]</span> <span class="o">/</span> <span class="n">W</span> <span class="o">**</span> <span class="mi">2</span>
+    <span class="n">field</span> <span class="o">=</span> <span class="mf">0.</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">nobU</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nobV</span><span class="p">):</span>
+            <span class="n">field</span> <span class="o">+=</span> <span class="n">C</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">param</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">field</span></div>
+
+
+<div class="viewcode-block" id="lookuptablespan"><a class="viewcode-back" href="../index.html#simonurbs.lookuptablespan">[docs]</a><span class="k">def</span> <span class="nf">lookuptablespan</span><span class="p">(</span><span class="n">knotVector</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">plotVector</span><span class="p">,</span> <span class="n">s</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; make a matrix for which A[i] is the knot span in which plotVector[i] lays in</span>
+<span class="sd">    :param knotVector: knotVector to span</span>
+<span class="sd">    :param k: knotVector length</span>
+<span class="sd">    :param plotVector: parametric coordinate vector to span in the knotVector</span>
+<span class="sd">    :param s: plotVector length</span>
+<span class="sd">    :return a matrix contaning the knotvector span for each element of plotVector</span>
+<span class="sd">    source: the NURBS book</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">tablespan</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">s</span><span class="p">))</span>
+    <span class="n">left</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">indexActu</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
+        <span class="n">right</span> <span class="o">=</span> <span class="n">knotVector</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">knotVector</span><span class="p">[</span><span class="n">left</span><span class="p">]</span> <span class="o">==</span> <span class="n">right</span><span class="p">):</span>
+            <span class="k">continue</span>
+        <span class="n">left</span> <span class="o">=</span> <span class="n">i</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="k">while</span> <span class="p">(</span><span class="n">plotVector</span><span class="p">[</span><span class="n">indexActu</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">right</span><span class="p">):</span>
+            <span class="n">tablespan</span><span class="p">[</span><span class="n">indexActu</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">left</span><span class="p">)</span>
+            <span class="n">indexActu</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="n">tablespan</span><span class="p">[</span><span class="n">indexActu</span><span class="p">]</span> <span class="o">=</span> <span class="n">left</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="n">tablespan</span></div>
+
+
+<div class="viewcode-block" id="BasisFun"><a class="viewcode-back" href="../index.html#simonurbs.BasisFun">[docs]</a><span class="k">def</span> <span class="nf">BasisFun</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">U</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns the value of the basis function i, of degree p with knots U, at point u</span>
+<span class="sd">    source: the NURBS book</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">N</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matrix</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">p</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)));</span>
+    <span class="n">N</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+
+    <span class="n">left</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">p</span> <span class="o">+</span> <span class="mi">1</span><span class="p">));</span>
+    <span class="n">right</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">p</span> <span class="o">+</span> <span class="mi">1</span><span class="p">));</span>
+    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">p</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="n">left</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">u</span> <span class="o">-</span> <span class="n">U</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">j</span><span class="p">];</span>
+        <span class="n">right</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">U</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="n">j</span><span class="p">]</span> <span class="o">-</span> <span class="n">u</span><span class="p">;</span>
+        <span class="n">saved</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+        <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">j</span><span class="p">):</span>
+            <span class="n">temp</span> <span class="o">=</span> <span class="n">N</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">r</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="n">right</span><span class="p">[</span><span class="n">r</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">left</span><span class="p">[</span><span class="n">j</span> <span class="o">-</span> <span class="n">r</span><span class="p">]);</span>
+            <span class="n">N</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">r</span><span class="p">]</span> <span class="o">=</span> <span class="n">saved</span> <span class="o">+</span> <span class="n">right</span><span class="p">[</span><span class="n">r</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">temp</span><span class="p">;</span>
+            <span class="n">saved</span> <span class="o">=</span> <span class="n">left</span><span class="p">[</span><span class="n">j</span> <span class="o">-</span> <span class="n">r</span><span class="p">]</span> <span class="o">*</span> <span class="n">temp</span><span class="p">;</span>
+
+        <span class="n">N</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">saved</span><span class="p">;</span>
+
+    <span class="k">return</span> <span class="n">N</span></div>
+
+
+<div class="viewcode-block" id="BasisFunDers"><a class="viewcode-back" href="../index.html#simonurbs.BasisFunDers">[docs]</a><span class="k">def</span> <span class="nf">BasisFunDers</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">U</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Compute the basis function and the n-th first derivatives</span>
+<span class="sd">    :param i: knot span for u</span>
+<span class="sd">    :param u: evaluation point</span>
+<span class="sd">    :param p: basis order</span>
+<span class="sd">    :param U: knot vector</span>
+<span class="sd">    :param n: maximum derivative degree</span>
+<span class="sd">    :return matrix ders[p+1,p+1] where ders[i,j] is the value of the i-th derivative of Nj function</span>
+<span class="sd">    source: the NURBS book</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">N</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matrix</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">p</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">p</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)))</span>
+    <span class="n">N</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">left</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">p</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="n">right</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">p</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">p</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="n">left</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">u</span> <span class="o">-</span> <span class="n">U</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">j</span><span class="p">]</span>
+        <span class="n">right</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">U</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="n">j</span><span class="p">]</span> <span class="o">-</span> <span class="n">u</span>
+        <span class="n">saved</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">j</span><span class="p">):</span>
+            <span class="n">N</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="n">r</span><span class="p">]</span> <span class="o">=</span> <span class="n">right</span><span class="p">[</span><span class="n">r</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">left</span><span class="p">[</span><span class="n">j</span> <span class="o">-</span> <span class="n">r</span><span class="p">]</span>
+            <span class="n">temp</span> <span class="o">=</span> <span class="n">N</span><span class="p">[</span><span class="n">r</span><span class="p">,</span> <span class="n">j</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="n">N</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="n">r</span><span class="p">]</span>
+            <span class="n">N</span><span class="p">[</span><span class="n">r</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">saved</span> <span class="o">+</span> <span class="n">right</span><span class="p">[</span><span class="n">r</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">temp</span>
+            <span class="n">saved</span> <span class="o">=</span> <span class="n">left</span><span class="p">[</span><span class="n">j</span> <span class="o">-</span> <span class="n">r</span><span class="p">]</span> <span class="o">*</span> <span class="n">temp</span>
+
+        <span class="n">N</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">saved</span>
+
+    <span class="c1"># Load the basis function</span>
+    <span class="n">ders</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matrix</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">p</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)))</span>
+    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">p</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="n">ders</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">N</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="n">p</span><span class="p">]</span>
+
+    <span class="c1"># Compute the derivatives</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matrix</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="n">p</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)))</span>
+    <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">p</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="n">s1</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">s2</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">a</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">d</span> <span class="o">=</span> <span class="mf">0.</span>
+            <span class="n">rk</span> <span class="o">=</span> <span class="n">r</span> <span class="o">-</span> <span class="n">k</span>
+            <span class="n">pk</span> <span class="o">=</span> <span class="n">p</span> <span class="o">-</span> <span class="n">k</span>
+            <span class="k">if</span> <span class="n">r</span> <span class="o">&gt;=</span> <span class="n">k</span><span class="p">:</span>
+                <span class="n">a</span><span class="p">[</span><span class="n">s2</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">a</span><span class="p">[</span><span class="n">s1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="n">N</span><span class="p">[</span><span class="n">pk</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">rk</span><span class="p">]</span>
+                <span class="n">d</span> <span class="o">=</span> <span class="n">a</span><span class="p">[</span><span class="n">s2</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">N</span><span class="p">[</span><span class="n">rk</span><span class="p">,</span> <span class="n">pk</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">rk</span> <span class="o">&gt;=</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+                <span class="n">j1</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">j1</span> <span class="o">=</span> <span class="o">-</span><span class="n">rk</span>
+            <span class="k">if</span> <span class="n">r</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">&lt;=</span> <span class="n">pk</span><span class="p">:</span>
+                <span class="n">j2</span> <span class="o">=</span> <span class="n">k</span> <span class="o">-</span> <span class="mi">1</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">j2</span> <span class="o">=</span> <span class="n">p</span> <span class="o">-</span> <span class="n">r</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">j1</span><span class="p">,</span> <span class="n">j2</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="n">a</span><span class="p">[</span><span class="n">s2</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">a</span><span class="p">[</span><span class="n">s1</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">-</span> <span class="n">a</span><span class="p">[</span><span class="n">s1</span><span class="p">,</span> <span class="n">j</span> <span class="o">-</span> <span class="mi">1</span><span class="p">])</span> <span class="o">/</span> <span class="n">N</span><span class="p">[</span><span class="n">pk</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">rk</span> <span class="o">+</span> <span class="n">j</span><span class="p">]</span>
+                <span class="n">d</span> <span class="o">+=</span> <span class="n">a</span><span class="p">[</span><span class="n">s2</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">*</span> <span class="n">N</span><span class="p">[</span><span class="n">rk</span> <span class="o">+</span> <span class="n">j</span><span class="p">,</span> <span class="n">pk</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">r</span> <span class="o">&lt;=</span> <span class="n">pk</span><span class="p">:</span>
+                <span class="n">a</span><span class="p">[</span><span class="n">s2</span><span class="p">,</span> <span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">a</span><span class="p">[</span><span class="n">s1</span><span class="p">,</span> <span class="n">k</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="n">N</span><span class="p">[</span><span class="n">pk</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">r</span><span class="p">]</span>
+                <span class="n">d</span> <span class="o">+=</span> <span class="n">a</span><span class="p">[</span><span class="n">s2</span><span class="p">,</span> <span class="n">k</span><span class="p">]</span> <span class="o">*</span> <span class="n">N</span><span class="p">[</span><span class="n">r</span><span class="p">,</span> <span class="n">pk</span><span class="p">]</span>
+            <span class="n">ders</span><span class="p">[</span><span class="n">k</span><span class="p">,</span> <span class="n">r</span><span class="p">]</span> <span class="o">=</span> <span class="n">d</span>
+            <span class="n">j</span> <span class="o">=</span> <span class="n">s1</span>
+            <span class="n">s1</span> <span class="o">=</span> <span class="n">s2</span>
+            <span class="n">s2</span> <span class="o">=</span> <span class="n">j</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">p</span>
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">p</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">ders</span><span class="p">[</span><span class="n">k</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">*=</span> <span class="n">r</span>
+        <span class="n">r</span> <span class="o">*=</span> <span class="p">(</span><span class="n">p</span> <span class="o">-</span> <span class="n">k</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">ders</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, S.Breumier, O.Lampron.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.7</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.8</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
