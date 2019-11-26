@@ -1,0 +1,3 @@
+- [ ] Compute stress out of the plot function
+- [ ] Merge plot_matrix, shape_function and R_compute
+- [ ] Correct Mesh plot function to plot geometric elements

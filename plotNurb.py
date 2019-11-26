@@ -1,19 +1,24 @@
-import numpy as np
-import matplotlib.pyplot as plt
-from scipy.spatial import ConvexHull, convex_hull_plot_2d
+"""
+Displays the results fields by interpolating using the NURBS shape functions
+"""
 import math
+
+import matplotlib.pyplot as plt
 from scipy.optimize import minimize
+from scipy.spatial import ConvexHull
+
 from simonurbs import *
+
 
 def plot_field(SU, SV, SOL, label="", plotGrid="", boundlow=-10000, boundsup=-10000, nobU=0, nel=0, IEN=np.zeros((1)),
                ctrlpts=np.zeros((1))):
-    """
-    Plot a given field on a regular gridd
-    :param SU, SV: X, Y coordinates matrix
+    """Plot a given field on a regular grid
+
+    :param SU,SV: X, Y coordinates matrix
     :param SOL: Field matrix
     :param label: Title string
     :param plotGrid: 'mesh' if mesh is to be superimposed
-    :param boundlow, boundsup: contour color lower and upper bounds
+    :param boundlow,boundsup: contour color lower and upper bounds
     :param nobU: number of CP in U direction (only if plot mesh)
     :param nel: number of elements (only if plot mesh)
     :param IEN: Connectivity table (only if plot mesh)
@@ -27,17 +32,22 @@ def plot_field(SU, SV, SOL, label="", plotGrid="", boundlow=-10000, boundsup=-10
     plt.title(label)
     if plotGrid == "mesh":
         plotMesh(nel, IEN, nobU, ctrlpts)
+    if plotGrid == "nodes":
+        plotNode(ctrlpts)
 
 
 def plotMesh(nel, IEN, nobU, ctrlpts):
-    ''' Plot the isogeometric mesh given the controlpoints and connectivity array '''
+    """Plot the isogeometric mesh given the controlpoints and connectivity array
+
+    :param nel: Number of elements
+    :param IEN: elements to controlpoint connectivity array
+    :param nobU: number of nodes in the U direction
+    :param ctrlpts: control point matrix
+    """
     nbpts = IEN.shape[1]
-    col_list = ["red", "black"]
-    k = 0
 
     for i in range(0, nel):
         coord_elem = np.zeros((nbpts, 2))
-        pres = False
         for j in range(0, nbpts):
             i_actu = int(IEN[i, j]) % nobU
             j_actu = int(IEN[i, j] / nobU)
@@ -45,8 +55,6 @@ def plotMesh(nel, IEN, nobU, ctrlpts):
             y_actu = ctrlpts[i_actu, j_actu, 1]
             coord_elem[j, 0] = x_actu
             coord_elem[j, 1] = y_actu
-            if j_actu * nobU + i_actu == 58:
-                pres = True
 
         hull = ConvexHull(coord_elem)
         plt.plot(coord_elem[:, 0], coord_elem[:, 1], 'o', color="black")
@@ -55,14 +63,39 @@ def plotMesh(nel, IEN, nobU, ctrlpts):
             plt.plot(coord_elem[simplex, 0], coord_elem[simplex, 1], 'k-')
 
 
-def plotNode(x, y, nobU, nobV):
+def plotNode(ctrlpts):
+    """Plot the controlpoints
+
+    :param ctrlpts: controlpoint matrix
+    """
+    nobU = ctrlpts.shape[0]
+    nobV = ctrlpts.shape[1]
+    x = np.reshape(ctrlpts[:, :, 0], (nobU*nobV))
+    y = np.reshape(ctrlpts[:, :, 1], (nobU*nobV))
     plt.scatter(x, y, marker='o')
     for i in range(0, nobU * nobV):
         plt.annotate(str(i), (x[i], y[i]), color="black")
 
 
-def plot_nurbs(ctrlpts, knotvector_u, knotvector_v, degree_u, degree_v, u, GP_coord, nel, IEN, toPlot, plotGrid, E, nu,
-               plotFields, numrefine, meshPrev=np.zeros((1))):
+def plot_nurbs(ctrlpts, knotvector_u, knotvector_v, degree_u, degree_v, nel, IEN, toPlot, plotGrid, E, nu,
+               disp_solve, numrefine, meshPrev=np.zeros((1))):
+    """Plot the result fields on the domain by generating a regular grid in teh parametric space.
+    Also compute the strain and stress from the displacement field.
+    Exports all the results in files in the SQR_vals directory.
+
+    :param ctrlpts: control point matrix
+    :param knotvector_u,knotvector_v: knot vector in u en v direction
+    :param degree_u,degree_v: shape function degree in u and v directions
+    :param nel: number of elements
+    :param IEN: elements to controlpoint connectivity array
+    :param toPlot: Dictionary containing the fields to plot (dimensions= number of DOFS)
+    :param plotGrid: Strin, "mesh" will superimpose the mesh, "
+    :param E: Youngs modulus
+    :param nu: Poisson ratio
+    :param disp_solve: Boolean indicating wether the plots should be displayed or not
+    :param numrefine: Refinement number (only used to name the output files)
+    :param meshPrev: Previous mesh control points. Use to compare two solutions on two different meshes.
+    """
     nobU = ctrlpts.shape[0]
     nobV = ctrlpts.shape[1]
     weights = np.zeros((nobU, nobV))
@@ -112,15 +145,12 @@ def plot_nurbs(ctrlpts, knotvector_u, knotvector_v, degree_u, degree_v, u, GP_co
                              degree_u, degree_v, weights))
         np.savetxt("SQR_vals/u_CP_" + str(numrefine), np.array([xtransp, ytransp, u_interpX, u_interpY]).T, fmt="%.5e")
 
-    gp_num = GP_coord.shape[1]
-    box_ecart = 0.5
     C, dC_dxi, dC_deta = make_plot_matrix(ctrlpts, knotvector_u, knotvector_v, degree_u, degree_v, resol, weights)
     field = {}
     SU = np.zeros((resol, resol))
     SV = np.zeros((resol, resol))
     eps = np.zeros((2, 2, resol, resol))
     sig = np.zeros((2, 2, resol, resol))
-    plotnum = len(toPlot.keys())
     dx_dxi = np.zeros((2, 2, resol, resol))
     dxi_dx = np.zeros((2, 2, resol, resol))
     dR_dx = np.zeros((2, nobU, nobV, resol, resol))
@@ -169,12 +199,7 @@ def plot_nurbs(ctrlpts, knotvector_u, knotvector_v, degree_u, degree_v, u, GP_co
                 sig[0, 1, i, j] = coef * (1 - nu) * eps[0, 1, i, j]
                 sig[1, 0, i, j] = coef * (1 - nu) * eps[1, 0, i, j]
 
-    if plotGrid == "mesh":
-        plotMesh(nel, IEN, nobU, ctrlpts)
-    elif plotGrid == "nodes":
-        plotNode(x, y, nobU, nobV)
-
-    if plotFields:
+    if disp_solve:
         plt.figure(figsize=(12, 4))
         i = 0
         for elem in toPlot.keys():
@@ -233,6 +258,16 @@ def plot_nurbs(ctrlpts, knotvector_u, knotvector_v, degree_u, degree_v, u, GP_co
 
 
 def findcoord(targ, ctrlpts, knotvector_u, knotvector_v, degree_u, degree_v, weights):
+    """Find the (xi, eta) coordinates in the parametric space corresponding to a given (x,y) in the geometric space
+    using constrained optimization.
+
+    :param targ: [x,y] target
+    :param ctrlpts: control points
+    :param knotvector_u,knotvector_v: knot vectors in u and v directions
+    :param degree_u,degree_v: shape function degree in u and v directions
+    :param weights: weight list
+    :return: the corresponding [xi, eta] coordinates
+    """
     xtarg = targ[0]
     ytarg = targ[1]
     safe = 1.e-3
@@ -246,6 +281,17 @@ def findcoord(targ, ctrlpts, knotvector_u, knotvector_v, degree_u, degree_v, wei
 
 
 def compCoordResVal(paramcoord, xtarg, ytarg, ctrlpts, knotvector_u, knotvector_v, degree_u, degree_v, weights):
+    """Compute the  difference between target and actual x, y geometric coordinates given the (xi, eta)
+    parametric coordinates, for optimization.
+
+    :param paramcoord: [xi, eta] coordinates
+    :param xtarg,ytarg: target coordinates
+    :param ctrlpts: controlpoints
+    :param knotvector_u,knotvector_v: knotvectors in u and v directions
+    :param degree_u,degree_v: shape function degree in u and v directions
+    :param weights: weight list
+    :return: L2 norm of the difference between target and actual (x,y) vectors
+    """
     xi = abs(paramcoord[0])
     eta = abs(paramcoord[1])
     x = compRval(ctrlpts[:, :, 0], xi, eta, ctrlpts, knotvector_u, knotvector_v, degree_u, degree_v, weights)
@@ -253,7 +299,14 @@ def compCoordResVal(paramcoord, xtarg, ytarg, ctrlpts, knotvector_u, knotvector_
     return math.sqrt((xtarg - x) ** 2 + (ytarg - y) ** 2)
 
 def make_plot_matrix(ctrlpts, knotvector_u, knotvector_v, degree_u, degree_v, resol, weights):
-    ''' Generate a C matrix 'such that C[i,j,k,l] = R[i,j] (xi[k], eta[l])'''
+    """Generate a C matrix 'such that C[i,j,k,l] = R[i,j] (xi[k], eta[l]), to plot fields on a grid
+
+    :param ctrlpts: controlpoints
+    :param knotvector_u,knotvector_v: knotvectors in u and v directions
+    :param degree_u,degree_v: shape function degree in u and v directions
+    :param resol: plot grid resolution
+    :param weights: weight list
+    """
 
     plotVectorU = np.linspace(0, max(knotvector_u), resol);
     plotVectorV = np.linspace(0, max(knotvector_v), resol);

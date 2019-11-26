@@ -1,0 +1,289 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>assembly &#8212; pythonIGA 1 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for assembly</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">simonurbs</span> <span class="k">import</span> <span class="n">BasisFunDers</span>
+
+<div class="viewcode-block" id="build_shapeFun"><a class="viewcode-back" href="../index.html#assembly.build_shapeFun">[docs]</a><span class="k">def</span> <span class="nf">build_shapeFun</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">INC</span><span class="p">,</span> <span class="n">IEN</span><span class="p">,</span> <span class="n">xi_tilde</span><span class="p">,</span> <span class="n">eta_tilde</span><span class="p">,</span> <span class="n">knot_u</span><span class="p">,</span> <span class="n">knot_v</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">B</span><span class="p">):</span>
+	<span class="sd">&quot;&quot;&quot;Compute the shape function values and derivatives at a gauss point</span>
+
+<span class="sd">	:param e: actual element number</span>
+<span class="sd">	:param IEN: element to node connectivity matrix</span>
+<span class="sd">	:param INC: global to local shape function number connectivity matrix</span>
+<span class="sd">	:param xi_tilde,eta_tilde: gauss point coordinates</span>
+<span class="sd">	:param knot_u,knotV: knot vector</span>
+<span class="sd">	:param p,v: degree in U and V directions</span>
+<span class="sd">	:param B: Control points</span>
+<span class="sd">	:return:</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+	<span class="n">R</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">p</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">q</span><span class="o">+</span><span class="mi">1</span><span class="p">))</span>
+	<span class="n">dR_dx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">p</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">q</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span> <span class="c1"># wrt geometric coordinates</span>
+
+	<span class="n">dR_dxi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">p</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">q</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span> <span class="c1"># wrt parametric coordinates</span>
+	<span class="n">dx_dxi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">))</span>
+	<span class="n">dxi_dtildexi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">))</span>
+	
+	<span class="n">J_mat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">))</span>
+	<span class="n">loc_num</span> <span class="o">=</span> <span class="mi">0</span>
+	<span class="n">sum_xi</span> <span class="o">=</span> <span class="mi">0</span>
+	<span class="n">sum_eta</span> <span class="o">=</span> <span class="mi">0</span>
+	<span class="n">sum_tot</span> <span class="o">=</span> <span class="mi">0</span>
+	
+	<span class="n">ni</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">INC</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">IEN</span><span class="p">[</span><span class="n">e</span><span class="p">,</span> <span class="mi">0</span><span class="p">]),</span> <span class="mi">0</span><span class="p">])</span>
+	<span class="n">nj</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">INC</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">IEN</span><span class="p">[</span><span class="n">e</span><span class="p">,</span> <span class="mi">0</span><span class="p">]),</span> <span class="mi">1</span><span class="p">])</span>
+	
+	<span class="n">xi</span> <span class="o">=</span> <span class="mf">0.5</span><span class="o">*</span><span class="p">((</span><span class="n">knot_u</span><span class="p">[</span><span class="n">ni</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span> <span class="n">knot_u</span><span class="p">[</span><span class="n">ni</span><span class="p">])</span><span class="o">*</span><span class="n">xi_tilde</span> <span class="o">+</span> <span class="n">knot_u</span><span class="p">[</span><span class="n">ni</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">knot_u</span><span class="p">[</span><span class="n">ni</span><span class="p">])</span>
+	<span class="n">eta</span> <span class="o">=</span> <span class="mf">0.5</span><span class="o">*</span><span class="p">((</span><span class="n">knot_v</span><span class="p">[</span><span class="n">nj</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span> <span class="n">knot_v</span><span class="p">[</span><span class="n">nj</span><span class="p">])</span><span class="o">*</span><span class="n">eta_tilde</span> <span class="o">+</span> <span class="n">knot_v</span><span class="p">[</span><span class="n">nj</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">knot_v</span><span class="p">[</span><span class="n">nj</span><span class="p">])</span>
+	
+	<span class="n">dN</span> <span class="o">=</span> <span class="n">BasisFunDers</span><span class="p">(</span><span class="n">ni</span><span class="p">,</span><span class="n">xi</span><span class="p">,</span><span class="n">p</span><span class="p">,</span><span class="n">knot_u</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+	<span class="n">dM</span> <span class="o">=</span> <span class="n">BasisFunDers</span><span class="p">(</span><span class="n">nj</span><span class="p">,</span><span class="n">eta</span><span class="p">,</span><span class="n">q</span><span class="p">,</span><span class="n">knot_v</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+	<span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="n">q</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+		<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">p</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+			<span class="n">loc_num</span> <span class="o">+=</span> <span class="mi">1</span>
+			<span class="n">R</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">dN</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">p</span><span class="o">-</span><span class="n">i</span><span class="p">]</span><span class="o">*</span><span class="n">dM</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">q</span><span class="o">-</span><span class="n">j</span><span class="p">]</span><span class="o">*</span><span class="n">B</span><span class="p">[</span><span class="n">ni</span><span class="o">-</span><span class="n">i</span><span class="p">,</span> <span class="n">nj</span><span class="o">-</span><span class="n">j</span><span class="p">,</span><span class="mi">2</span><span class="p">]</span>
+			<span class="n">sum_tot</span> <span class="o">+=</span> <span class="n">R</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]</span>
+			<span class="n">dR_dxi</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">dN</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="n">p</span><span class="o">-</span><span class="n">i</span><span class="p">]</span><span class="o">*</span><span class="n">dM</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">q</span><span class="o">-</span><span class="n">j</span><span class="p">]</span><span class="o">*</span><span class="n">B</span><span class="p">[</span><span class="n">ni</span><span class="o">-</span><span class="n">i</span><span class="p">,</span> <span class="n">nj</span><span class="o">-</span><span class="n">j</span><span class="p">,</span><span class="mi">2</span><span class="p">]</span>
+			<span class="n">sum_xi</span> <span class="o">+=</span> <span class="n">dR_dxi</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span>
+			<span class="n">dR_dxi</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">dN</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">p</span><span class="o">-</span><span class="n">i</span><span class="p">]</span><span class="o">*</span><span class="n">dM</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">q</span><span class="o">-</span><span class="n">j</span><span class="p">]</span><span class="o">*</span><span class="n">B</span><span class="p">[</span><span class="n">ni</span><span class="o">-</span><span class="n">i</span><span class="p">,</span> <span class="n">nj</span><span class="o">-</span><span class="n">j</span><span class="p">,</span><span class="mi">2</span><span class="p">]</span>
+			<span class="n">sum_eta</span> <span class="o">+=</span> <span class="n">dR_dxi</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span>
+	
+	<span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="n">q</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+		<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">p</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+			<span class="n">R</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">R</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]</span><span class="o">/</span><span class="n">sum_tot</span>
+			<span class="n">dR_dxi</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">dR_dxi</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">sum_tot</span> <span class="o">-</span> <span class="n">R</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]</span><span class="o">*</span><span class="n">sum_xi</span><span class="p">)</span> <span class="o">/</span> <span class="n">sum_tot</span><span class="o">**</span><span class="mi">2</span>
+			<span class="n">dR_dxi</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">dR_dxi</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="n">sum_tot</span> <span class="o">-</span> <span class="n">R</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]</span><span class="o">*</span><span class="n">sum_eta</span><span class="p">)</span> <span class="o">/</span> <span class="n">sum_tot</span><span class="o">**</span><span class="mi">2</span>
+	
+	<span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="n">q</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+		<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">p</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+			<span class="k">for</span> <span class="n">aa</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="p">):</span>
+				<span class="k">for</span> <span class="n">bb</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="p">):</span>
+					<span class="n">dx_dxi</span><span class="p">[</span><span class="n">aa</span><span class="p">,</span> <span class="n">bb</span><span class="p">]</span> <span class="o">=</span> <span class="n">dx_dxi</span><span class="p">[</span><span class="n">aa</span><span class="p">,</span> <span class="n">bb</span><span class="p">]</span> <span class="o">+</span> <span class="n">B</span><span class="p">[</span><span class="n">ni</span><span class="o">-</span><span class="n">i</span><span class="p">,</span> <span class="n">nj</span><span class="o">-</span><span class="n">j</span><span class="p">,</span> <span class="n">aa</span><span class="p">]</span><span class="o">*</span><span class="n">dR_dxi</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">,</span><span class="n">bb</span><span class="p">]</span>
+
+	<span class="n">dxi_dx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asmatrix</span><span class="p">(</span><span class="n">dx_dxi</span><span class="p">))</span>
+	
+	<span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="n">q</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+		<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">p</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+			<span class="k">for</span> <span class="n">aa</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="p">):</span>
+				<span class="k">for</span> <span class="n">bb</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="p">):</span>
+					<span class="n">dR_dx</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">,</span> <span class="n">aa</span><span class="p">]</span> <span class="o">=</span> <span class="n">dR_dx</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">,</span> <span class="n">aa</span><span class="p">]</span> <span class="o">+</span> <span class="n">dR_dxi</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">,</span> <span class="n">bb</span><span class="p">]</span><span class="o">*</span><span class="n">dxi_dx</span><span class="p">[</span><span class="n">bb</span><span class="p">,</span> <span class="n">aa</span><span class="p">]</span>
+
+	<span class="n">dxi_dtildexi</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.5</span><span class="o">*</span><span class="p">(</span><span class="n">knot_u</span><span class="p">[</span><span class="n">ni</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">knot_u</span><span class="p">[</span><span class="n">ni</span><span class="p">])</span>
+	<span class="n">dxi_dtildexi</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.5</span><span class="o">*</span><span class="p">(</span><span class="n">knot_v</span><span class="p">[</span><span class="n">nj</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">knot_v</span><span class="p">[</span><span class="n">nj</span><span class="p">])</span>
+	
+	<span class="k">for</span> <span class="n">aa</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="p">):</span>
+		<span class="k">for</span> <span class="n">bb</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="p">):</span>
+			<span class="k">for</span> <span class="n">cc</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="p">):</span>
+				<span class="n">J_mat</span><span class="p">[</span><span class="n">aa</span><span class="p">,</span> <span class="n">bb</span><span class="p">]</span> <span class="o">=</span> <span class="n">J_mat</span><span class="p">[</span><span class="n">aa</span><span class="p">,</span> <span class="n">bb</span><span class="p">]</span> <span class="o">+</span> <span class="n">dx_dxi</span><span class="p">[</span><span class="n">aa</span><span class="p">,</span> <span class="n">cc</span><span class="p">]</span> <span class="o">*</span> <span class="n">dxi_dtildexi</span><span class="p">[</span><span class="n">cc</span><span class="p">,</span> <span class="n">bb</span><span class="p">]</span>
+				
+	<span class="n">J</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">det</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asmatrix</span><span class="p">(</span><span class="n">J_mat</span><span class="p">))</span>
+	<span class="n">gp_xitilde</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matrix</span><span class="p">([</span><span class="n">xi_tilde</span><span class="p">,</span> <span class="n">eta_tilde</span><span class="p">])</span>
+	<span class="n">gp_x</span> <span class="o">=</span> <span class="n">J_mat</span><span class="o">*</span><span class="n">gp_xitilde</span><span class="o">.</span><span class="n">T</span>
+	<span class="k">return</span> <span class="n">R</span><span class="p">,</span> <span class="n">dR_dx</span><span class="p">,</span> <span class="n">J</span><span class="p">,</span> <span class="n">J_mat</span><span class="p">,</span> <span class="n">gp_x</span></div>
+
+
+<div class="viewcode-block" id="make_KF"><a class="viewcode-back" href="../index.html#assembly.make_KF">[docs]</a><span class="k">def</span> <span class="nf">make_KF</span><span class="p">(</span><span class="n">knot_u</span><span class="p">,</span> <span class="n">knot_v</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">nel</span><span class="p">,</span> <span class="n">INC</span><span class="p">,</span> <span class="n">IEN</span><span class="p">,</span> <span class="n">gp</span><span class="p">,</span> <span class="n">gw</span><span class="p">,</span> <span class="n">nquad</span><span class="p">,</span> <span class="n">E_coeff</span><span class="p">,</span> <span class="n">nu_coeff</span><span class="p">,</span> <span class="n">Fb</span><span class="p">):</span>
+	<span class="sd">&quot;&quot;&quot;Compute the global K and F matrix</span>
+
+<span class="sd">	:param knot_u,knotv: knot vectors</span>
+<span class="sd">	:param B: control points</span>
+<span class="sd">	:param p,q: degrees in U and V directions</span>
+<span class="sd">	:param nel: number of elements</span>
+<span class="sd">	:param INC: globale to local shape function number connectivity matrix</span>
+<span class="sd">	:param IEN: element to node connectivity matrix</span>
+<span class="sd">	:param gp: Gauss points</span>
+<span class="sd">	:param gw: Gauss weights</span>
+<span class="sd">	:param nquad: number of quadratic points</span>
+<span class="sd">	:param E_coeff: Youngs modulus</span>
+<span class="sd">	:param nu_coeff: poissons ratio</span>
+<span class="sd">	:param Fb: volume force</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+	<span class="n">nen</span> <span class="o">=</span> <span class="p">(</span><span class="n">p</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">q</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+	<span class="n">npts</span> <span class="o">=</span> <span class="n">B</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">B</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+	<span class="n">K_global</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">2</span> <span class="o">*</span> <span class="n">npts</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">npts</span><span class="p">))</span>
+	<span class="n">F_global</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">2</span> <span class="o">*</span> <span class="n">npts</span><span class="p">))</span>
+	<span class="n">GP_coord</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nel</span><span class="p">,</span> <span class="n">nquad</span> <span class="o">*</span> <span class="n">nquad</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+	
+	<span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">nel</span><span class="p">):</span>
+		<span class="n">ni</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">INC</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">IEN</span><span class="p">[</span><span class="n">e</span><span class="p">,</span> <span class="mi">0</span><span class="p">]),</span> <span class="mi">0</span><span class="p">])</span>
+		<span class="n">nj</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">INC</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">IEN</span><span class="p">[</span><span class="n">e</span><span class="p">,</span> <span class="mi">0</span><span class="p">]),</span> <span class="mi">1</span><span class="p">])</span>
+				
+		<span class="k">if</span> <span class="p">(</span><span class="n">knot_u</span><span class="p">[</span><span class="n">ni</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">knot_u</span><span class="p">[</span><span class="n">ni</span><span class="p">])</span> <span class="ow">or</span> <span class="p">(</span><span class="n">knot_v</span><span class="p">[</span><span class="n">nj</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">knot_v</span><span class="p">[</span><span class="n">nj</span><span class="p">]):</span>
+			<span class="k">continue</span>
+			
+		<span class="n">K_local</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">2</span><span class="o">*</span><span class="n">nen</span><span class="p">,</span> <span class="mi">2</span><span class="o">*</span><span class="n">nen</span><span class="p">))</span>
+		<span class="n">F_local</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">2</span><span class="o">*</span><span class="n">nen</span><span class="p">))</span>
+		
+		<span class="c1">#*************** BUILD K AND F LOCAL *********************</span>
+		<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">nquad</span><span class="p">):</span>
+			<span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">nquad</span><span class="p">):</span>
+				<span class="n">R</span><span class="p">,</span> <span class="n">dR_dx</span><span class="p">,</span> <span class="n">J</span><span class="p">,</span> <span class="n">J_mat</span><span class="p">,</span> <span class="n">gp_x</span> <span class="o">=</span> <span class="n">build_shapeFun</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">INC</span><span class="p">,</span> <span class="n">IEN</span><span class="p">,</span> <span class="n">gp</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">gp</span><span class="p">[</span><span class="n">j</span><span class="p">],</span> <span class="n">knot_u</span><span class="p">,</span> <span class="n">knot_v</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">B</span><span class="p">)</span>
+				<span class="n">Jmod</span> <span class="o">=</span> <span class="n">J</span><span class="o">*</span><span class="n">gw</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">*</span><span class="n">gw</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+				<span class="n">build_Klocal</span><span class="p">(</span><span class="n">dR_dx</span><span class="p">,</span> <span class="n">Jmod</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">K_local</span><span class="p">,</span> <span class="n">E_coeff</span><span class="p">,</span> <span class="n">nu_coeff</span><span class="p">)</span>
+				<span class="n">build_Flocal</span><span class="p">(</span><span class="n">R</span><span class="p">,</span> <span class="n">Jmod</span><span class="p">,</span> <span class="n">Fb</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">F_local</span><span class="p">)</span>
+				<span class="n">GP_coord</span><span class="p">[</span><span class="n">e</span><span class="p">,</span> <span class="n">j</span> <span class="o">*</span> <span class="n">nquad</span> <span class="o">+</span> <span class="n">i</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">gp_x</span><span class="o">.</span><span class="n">tolist</span><span class="p">()[</span><span class="mi">0</span><span class="p">])</span>
+		
+		<span class="c1">#*************** Global ASSEMBLY *********************</span>
+		<span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">q</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+			<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">p</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+				<span class="n">aa</span> <span class="o">=</span> <span class="n">j</span> <span class="o">*</span> <span class="p">(</span><span class="n">p</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">i</span>
+				<span class="n">F_global</span><span class="p">[</span><span class="mi">2</span> <span class="o">*</span> <span class="nb">int</span><span class="p">(</span><span class="n">IEN</span><span class="p">[</span><span class="n">e</span><span class="p">,</span> <span class="n">aa</span><span class="p">]):</span><span class="mi">2</span> <span class="o">*</span> <span class="nb">int</span><span class="p">(</span><span class="n">IEN</span><span class="p">[</span><span class="n">e</span><span class="p">,</span> <span class="n">aa</span><span class="p">])</span> <span class="o">+</span> <span class="mi">2</span><span class="p">]</span> <span class="o">+=</span> <span class="n">F_local</span><span class="p">[</span><span class="mi">2</span> <span class="o">*</span> <span class="n">aa</span><span class="p">:</span><span class="mi">2</span> <span class="o">*</span> <span class="n">aa</span> <span class="o">+</span> <span class="mi">2</span><span class="p">]</span>
+				<span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">q</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+					<span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">p</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+						<span class="n">bb</span> <span class="o">=</span> <span class="n">l</span> <span class="o">*</span> <span class="p">(</span><span class="n">p</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">k</span>
+						<span class="n">K_global</span><span class="p">[</span><span class="mi">2</span> <span class="o">*</span> <span class="nb">int</span><span class="p">(</span><span class="n">IEN</span><span class="p">[</span><span class="n">e</span><span class="p">,</span> <span class="n">aa</span><span class="p">]):</span><span class="mi">2</span> <span class="o">*</span> <span class="nb">int</span><span class="p">(</span><span class="n">IEN</span><span class="p">[</span><span class="n">e</span><span class="p">,</span> <span class="n">aa</span><span class="p">])</span> <span class="o">+</span> <span class="mi">2</span><span class="p">,</span>
+						<span class="mi">2</span> <span class="o">*</span> <span class="nb">int</span><span class="p">(</span><span class="n">IEN</span><span class="p">[</span><span class="n">e</span><span class="p">,</span> <span class="n">bb</span><span class="p">]):</span><span class="mi">2</span> <span class="o">*</span> <span class="nb">int</span><span class="p">(</span><span class="n">IEN</span><span class="p">[</span><span class="n">e</span><span class="p">,</span> <span class="n">bb</span><span class="p">])</span> <span class="o">+</span> <span class="mi">2</span><span class="p">]</span> <span class="o">+=</span> <span class="n">K_local</span><span class="p">[</span><span class="mi">2</span> <span class="o">*</span> <span class="n">aa</span><span class="p">:</span><span class="mi">2</span> <span class="o">*</span> <span class="n">aa</span> <span class="o">+</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">bb</span><span class="p">:</span><span class="mi">2</span> <span class="o">*</span> <span class="n">bb</span> <span class="o">+</span> <span class="mi">2</span><span class="p">]</span>
+	<span class="k">return</span> <span class="n">K_global</span><span class="p">,</span> <span class="n">F_global</span><span class="p">,</span> <span class="n">GP_coord</span></div>
+
+
+<div class="viewcode-block" id="build_Klocal"><a class="viewcode-back" href="../index.html#assembly.build_Klocal">[docs]</a><span class="k">def</span> <span class="nf">build_Klocal</span><span class="p">(</span><span class="n">dR_dx</span><span class="p">,</span> <span class="n">Jmod</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">K_local</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">nu</span><span class="p">):</span>
+	<span class="sd">&quot;&quot;&quot;Build the local K matrix</span>
+
+<span class="sd">	:param dR_dx: shaper function deriviative at the gauss point</span>
+<span class="sd">	:param Jmod: Jacobian (from the master element to the geometric space) multiplied by the Gauss weight</span>
+<span class="sd">	:param p,q: degrees in the U and V directions</span>
+<span class="sd">	:param K_local: local K tensor</span>
+<span class="sd">	:param E: Youngs modulus</span>
+<span class="sd">	:param nu: poisson&#39;s ratio</span>
+<span class="sd">	:return: Nothing but changes K_local</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+	<span class="n">coef</span> <span class="o">=</span> <span class="n">E</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">nu</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+	<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">p</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+		<span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">q</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+			<span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">p</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+				<span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">q</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+					<span class="n">aa</span> <span class="o">=</span> <span class="n">j</span> <span class="o">*</span> <span class="p">(</span><span class="n">p</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">i</span>
+					<span class="n">bb</span> <span class="o">=</span> <span class="n">l</span> <span class="o">*</span> <span class="p">(</span><span class="n">p</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">k</span>
+					<span class="n">K_local</span><span class="p">[</span><span class="mi">2</span> <span class="o">*</span> <span class="n">aa</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">bb</span><span class="p">]</span> <span class="o">+=</span> <span class="n">coef</span> <span class="o">*</span> <span class="p">(</span>
+								<span class="n">dR_dx</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">dR_dx</span><span class="p">[</span><span class="n">k</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">nu</span><span class="p">)</span> <span class="o">*</span> <span class="n">dR_dx</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">dR_dx</span><span class="p">[</span><span class="n">k</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span> <span class="o">*</span> <span class="n">Jmod</span>
+					<span class="n">K_local</span><span class="p">[</span><span class="mi">2</span> <span class="o">*</span> <span class="n">aa</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">bb</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+=</span> <span class="n">coef</span> <span class="o">*</span> <span class="p">(</span>
+								<span class="n">dR_dx</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">dR_dx</span><span class="p">[</span><span class="n">k</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">nu</span><span class="p">)</span> <span class="o">*</span> <span class="n">dR_dx</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">dR_dx</span><span class="p">[</span><span class="n">k</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="n">Jmod</span>
+					<span class="n">K_local</span><span class="p">[</span><span class="mi">2</span> <span class="o">*</span> <span class="n">aa</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">bb</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+=</span> <span class="n">coef</span> <span class="o">*</span> <span class="p">(</span>
+								<span class="n">nu</span> <span class="o">*</span> <span class="n">dR_dx</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">dR_dx</span><span class="p">[</span><span class="n">k</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">nu</span><span class="p">)</span> <span class="o">*</span> <span class="n">dR_dx</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">dR_dx</span><span class="p">[</span>
+							<span class="n">k</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="n">Jmod</span>
+					<span class="n">K_local</span><span class="p">[</span><span class="mi">2</span> <span class="o">*</span> <span class="n">aa</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">bb</span><span class="p">]</span> <span class="o">+=</span> <span class="n">coef</span> <span class="o">*</span> <span class="p">(</span>
+								<span class="n">nu</span> <span class="o">*</span> <span class="n">dR_dx</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">dR_dx</span><span class="p">[</span><span class="n">k</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">nu</span><span class="p">)</span> <span class="o">*</span> <span class="n">dR_dx</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">dR_dx</span><span class="p">[</span>
+							<span class="n">k</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span> <span class="o">*</span> <span class="n">Jmod</span></div>
+	
+<div class="viewcode-block" id="build_Flocal"><a class="viewcode-back" href="../index.html#assembly.build_Flocal">[docs]</a><span class="k">def</span> <span class="nf">build_Flocal</span><span class="p">(</span><span class="n">R</span><span class="p">,</span> <span class="n">Jmod</span><span class="p">,</span> <span class="n">Fb</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">F_local</span><span class="p">):</span>
+	<span class="sd">&quot;&quot;&quot;Build local load vector with volume forces</span>
+
+<span class="sd">	:param R: shape functions</span>
+<span class="sd">	:param Jmod: jacobian from the master element to the geometric space</span>
+<span class="sd">	:param Fb: volume force vector</span>
+<span class="sd">	:param p,q: degrees in U and V directions</span>
+<span class="sd">	:param F_local: loacl load vector</span>
+<span class="sd">	:return: NOthing but changes F_local</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+	<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">p</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+		<span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">q</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+			<span class="n">aa</span> <span class="o">=</span> <span class="n">j</span><span class="o">*</span><span class="p">(</span><span class="n">p</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">+</span><span class="n">i</span>
+			<span class="n">F_local</span><span class="p">[</span><span class="mi">2</span><span class="o">*</span><span class="n">aa</span><span class="p">]</span> <span class="o">+=</span> <span class="n">Fb</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">R</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]</span><span class="o">*</span><span class="n">Jmod</span>
+			<span class="n">F_local</span><span class="p">[</span><span class="mi">2</span><span class="o">*</span><span class="n">aa</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">+=</span> <span class="n">Fb</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="n">R</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]</span><span class="o">*</span><span class="n">Jmod</span></div>
+
+		
+<div class="viewcode-block" id="impose_BC"><a class="viewcode-back" href="../index.html#assembly.impose_BC">[docs]</a><span class="k">def</span> <span class="nf">impose_BC</span><span class="p">(</span><span class="n">Ub</span><span class="p">,</span> <span class="n">K</span><span class="p">,</span> <span class="n">F</span><span class="p">,</span> <span class="n">method</span><span class="p">):</span>
+	<span class="sd">&quot;&quot;&quot;Impose Dirichlet boundary conditions (don&#39;t ask me why it&#39;s here)</span>
+
+<span class="sd">	:param Ub: (nb,3) vectors containing the node to be imposed, the dof number (1 or 2) and the displacement value</span>
+<span class="sd">	:param K: global K matrix</span>
+<span class="sd">	:param F: global load vector</span>
+<span class="sd">	:param method: &quot;reduce&quot; or &quot;penalty</span>
+<span class="sd">	:return: F, Ub_vect, free_coord, fixed_coord</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+	<span class="n">fixed_coord</span> <span class="o">=</span> <span class="p">[]</span>
+	<span class="n">Ub_vect</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">Ub</span><span class="p">))</span>
+	<span class="n">spanrange</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="n">K</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+	<span class="n">i</span><span class="o">=</span><span class="mi">0</span>
+
+	<span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">Ub</span><span class="p">:</span>
+		<span class="n">fixed_coord</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">elem</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="n">elem</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+		<span class="n">Ub_vect</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">elem</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+		<span class="n">i</span><span class="o">+=</span><span class="mi">1</span>
+	<span class="n">Ub_vect</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matrix</span><span class="p">(</span><span class="n">Ub_vect</span><span class="p">)</span>
+	
+	<span class="n">free_coord</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">spanrange</span> <span class="k">if</span> <span class="n">x</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">fixed_coord</span><span class="p">]</span>
+	<span class="k">if</span> <span class="n">method</span><span class="o">==</span><span class="s2">&quot;reduce&quot;</span><span class="p">:</span>
+		<span class="n">tmp</span> <span class="o">=</span> <span class="n">K</span><span class="p">[</span><span class="n">free_coord</span><span class="p">,:]</span>
+		<span class="n">tmp</span> <span class="o">=</span> <span class="n">tmp</span><span class="p">[:,</span><span class="n">fixed_coord</span><span class="p">]</span>
+		<span class="n">fub</span> <span class="o">=</span> <span class="n">tmp</span><span class="o">*</span><span class="n">Ub_vect</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
+		<span class="n">F</span><span class="p">[</span><span class="n">free_coord</span><span class="p">]</span> <span class="o">=</span> <span class="n">F</span><span class="p">[</span><span class="n">free_coord</span><span class="p">]</span><span class="o">-</span><span class="n">fub</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
+	<span class="k">elif</span> <span class="n">method</span><span class="o">==</span><span class="s2">&quot;penalty&quot;</span><span class="p">:</span>
+		<span class="n">F</span><span class="p">[</span><span class="n">fixed_coord</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1e7</span><span class="o">*</span><span class="n">Ub_vect</span>
+	
+	<span class="k">return</span> <span class="n">F</span><span class="p">,</span> <span class="n">Ub_vect</span><span class="p">,</span> <span class="n">free_coord</span><span class="p">,</span> <span class="n">fixed_coord</span></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, S.Breumier, O.Lampron.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

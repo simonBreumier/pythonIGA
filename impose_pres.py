@@ -1,9 +1,13 @@
-import numpy as np
-from mesh_rule import Gauss_rule
-from connec_mat import make_IEN_INC
-from simonurbs import BasisFunDers
+"""
+Several functions to compute the stress contribution to the force vector
+"""
 import math
+
+import numpy as np
+
 from assembly import build_shapeFun
+from simonurbs import BasisFunDers
+
 
 def compute_Fimp(nel, IEN, INC, gp, gw, knot_u, knot_v, p, q, ctrlpts, dof_BC, nquad, sig_imp, F):
 	for e in range(0, nel):
@@ -44,7 +48,24 @@ def build_F_BC(R_BC, Jmod_BC, p, F_BC_loc, sig_imp, dof_loc):
 	for i in range(0, lenDat):
 		F_BC_loc[i] += sig_imp*R_BC[dof_loc[i][0], dof_loc[i][1]]*Jmod_BC
 
-def compute_Fimp_alt(nel, IEN, INC, gp, gw, knot_u, p, ctrlpts_BC, ctrlpts, corres_BC, nquad, sig_imp, F, toImpose):
+def compute_Fimp_alt(nel, IEN, INC, gp, gw, knot_u, p, ctrlpts_BC, corres_BC, nquad, sig_imp, F, toImpose):
+	"""Compute the imposed stress contribution on the force vector
+
+	:param nel: number of elements
+	:param IEN: element to node connectivity matrix
+	:param INC: globale to local shape function number connectivity matrix
+	:param gp: Gauss points
+	:param gw: Gauss weights
+	:param knot_u: knot vector of the boundary
+	:param p: boundary degree
+	:param ctrlpts_BC: boundary control points
+	:param corres_BC: correspondence table between the boundary nodes and the global nodes
+	:param nquad: number of quadratic points
+	:param sig_imp: imposed stress tensor (2x2 np.matrix)
+	:param F: load vector
+	:param toImpose: boundary nodes ID to be imposed the stress
+	:return: Nothing, but changes the load vector F
+	"""
 	for e in range(0, nel):
 		ni = int(INC[int(IEN[e, 0])])
 		
@@ -68,6 +89,19 @@ def compute_Fimp_alt(nel, IEN, INC, gp, gw, knot_u, p, ctrlpts_BC, ctrlpts, corr
 			F[dof_glob] += F_BC_loc
 					
 def build_F_BC_alt(R_BC, Jmod_BC, p, F_BC_loc, sig_imp, ctrlpts_BC, ni, dx_dtiltexi, dy_dtiltexi, toImpose):
+	"""Build the local element load vector
+
+	:param R_BC: shape function values at gauss point
+	:param Jmod_BC: actual Gauss point name (bad name...)
+	:param p: curve degree
+	:param F_BC_loc: local load vector to be filled
+	:param sig_imp: imposed stress tensor (2x2 np.matrix)
+	:param ctrlpts_BC: boundary control points (local numbering)
+	:param ni: initial node number for the actual element
+	:param dx_dtiltexi,dy_dtiltexi: vector for pull back from the reference element to the geometric space
+	:param toImpose: Node tom impose sig_imp to
+	:return: Nothing but changes F_BC_loc
+	"""
 	norm = np.matrix([dy_dtiltexi, dx_dtiltexi]).T
 	#norm = norm/np.linalg.norm(norm)
 	sigmaNorm = np.array(np.dot(sig_imp, norm).T.tolist()[0])
@@ -81,6 +115,16 @@ def build_F_BC_alt(R_BC, Jmod_BC, p, F_BC_loc, sig_imp, ctrlpts_BC, ni, dx_dtilt
 		#	F_BC_loc[2*i+1] -= sig_imp*R_BC[i]*Jmod_BC*abs(dx_dtiltexi)
 			
 def build_shape_BC(e, INC, IEN, xi_tilde, BC_knot, p, B):
+	""" Build the boundary shape function and compute its value at the Gauss points
+
+	:param e: actual element number
+	:param IEN: element to node connectivity matrix
+	:param INC: global to local shape function number connectivity matrix
+	:param xi_tilde: gauss point coordinate
+	:param BC_knot: boundary knot vector
+	:param p: boundary degree
+	:param B: boundary control points
+	"""
 	n = len(BC_knot)
 	R = np.zeros((p+1))
 	dR_dx = np.zeros((p+1, 2)) 

@@ -1,0 +1,155 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>nurbsLib_handle &#8212; pythonIGA 1 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for nurbsLib_handle</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Interfacing function with the python NURBS library</span>
+<span class="sd">https://nurbs-python.readthedocs.io/en/latest/</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">geomdl</span> <span class="k">import</span> <span class="n">NURBS</span>
+<span class="kn">from</span> <span class="nn">geomdl</span> <span class="k">import</span> <span class="n">helpers</span>
+<span class="kn">from</span> <span class="nn">geomdl</span> <span class="k">import</span> <span class="n">operations</span>
+<span class="kn">from</span> <span class="nn">geomdl.visualization</span> <span class="k">import</span> <span class="n">VisMPL</span>
+
+
+<div class="viewcode-block" id="plot_BC"><a class="viewcode-back" href="../index.html#nurbsLib_handle.plot_BC">[docs]</a><span class="k">def</span> <span class="nf">plot_BC</span><span class="p">(</span><span class="n">BC_ctrlpts</span><span class="p">,</span> <span class="n">BC_knot</span><span class="p">,</span><span class="n">p</span><span class="p">):</span>
+	<span class="sd">&quot;&quot;&quot;Plot a boundary curve</span>
+
+<span class="sd">	:param BC_ctrlpts: boundary control points</span>
+<span class="sd">	:param BC_knot: boundary knot vector</span>
+<span class="sd">	:param p: boundary degree</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+	<span class="n">cu</span> <span class="o">=</span> <span class="n">NURBS</span><span class="o">.</span><span class="n">Curve</span><span class="p">()</span>
+	<span class="n">cu</span><span class="o">.</span><span class="n">degree</span> <span class="o">=</span> <span class="n">p</span>
+	<span class="n">cu</span><span class="o">.</span><span class="n">ctrlpts</span> <span class="o">=</span> <span class="n">BC_ctrlpts</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+	<span class="n">cu</span><span class="o">.</span><span class="n">knotvector</span> <span class="o">=</span> <span class="n">BC_knot</span>
+	<span class="n">cu</span><span class="o">.</span><span class="n">delta</span> <span class="o">=</span> <span class="mf">0.01</span>
+	<span class="c1"># Plot the control point polygon and the evaluated curve</span>
+	<span class="n">cu</span><span class="o">.</span><span class="n">vis</span> <span class="o">=</span> <span class="n">VisMPL</span><span class="o">.</span><span class="n">VisCurve2D</span><span class="p">()</span>
+	<span class="n">cu</span><span class="o">.</span><span class="n">render</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="get_nurbs_char"><a class="viewcode-back" href="../index.html#nurbsLib_handle.get_nurbs_char">[docs]</a><span class="k">def</span> <span class="nf">get_nurbs_char</span><span class="p">(</span><span class="n">surf</span><span class="p">):</span>
+	<span class="sd">&quot;&quot;&quot;Extract NURBS characteristics from a python NURBS surface</span>
+
+<span class="sd">	:param surf: python NURBS surface object</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+	<span class="n">p</span> <span class="o">=</span> <span class="n">surf</span><span class="o">.</span><span class="n">degree_u</span>
+	<span class="n">q</span> <span class="o">=</span> <span class="n">surf</span><span class="o">.</span><span class="n">degree_v</span>
+	<span class="n">knot_u</span> <span class="o">=</span> <span class="n">surf</span><span class="o">.</span><span class="n">knotvector_u</span>
+	<span class="n">knot_v</span> <span class="o">=</span> <span class="n">surf</span><span class="o">.</span><span class="n">knotvector_v</span>
+	<span class="n">ctrlpts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">surf</span><span class="o">.</span><span class="n">ctrlpts2d</span><span class="p">)</span>
+	
+	<span class="k">return</span> <span class="n">p</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">knot_u</span><span class="p">,</span> <span class="n">knot_v</span><span class="p">,</span> <span class="n">ctrlpts</span></div>
+	
+<div class="viewcode-block" id="init_nurbs"><a class="viewcode-back" href="../index.html#nurbsLib_handle.init_nurbs">[docs]</a><span class="k">def</span> <span class="nf">init_nurbs</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">knot_u</span><span class="p">,</span> <span class="n">knot_v</span><span class="p">,</span> <span class="n">ctrlpts</span><span class="p">):</span>
+	<span class="sd">&quot;&quot;&quot;Create a python NURBS surface object</span>
+
+<span class="sd">	:param p,q: degree in U and V directions</span>
+<span class="sd">	:param knot_u,knot_v: knot vectors in U and V directions</span>
+<span class="sd">	:param ctrlpts: control point matrix</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+	<span class="n">surf</span> <span class="o">=</span> <span class="n">NURBS</span><span class="o">.</span><span class="n">Surface</span><span class="p">()</span>
+	<span class="n">surf</span><span class="o">.</span><span class="n">degree_u</span> <span class="o">=</span> <span class="n">p</span>
+	<span class="n">surf</span><span class="o">.</span><span class="n">degree_v</span> <span class="o">=</span> <span class="n">q</span>
+	<span class="n">surf</span><span class="o">.</span><span class="n">ctrlpts2d</span> <span class="o">=</span> <span class="n">ctrlpts</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+	<span class="n">surf</span><span class="o">.</span><span class="n">knotvector_u</span> <span class="o">=</span> <span class="n">knot_u</span>
+	<span class="n">surf</span><span class="o">.</span><span class="n">knotvector_v</span> <span class="o">=</span> <span class="n">knot_v</span>
+	
+	<span class="k">return</span> <span class="n">surf</span></div>
+
+<div class="viewcode-block" id="degree_elevation"><a class="viewcode-back" href="../index.html#nurbsLib_handle.degree_elevation">[docs]</a><span class="k">def</span> <span class="nf">degree_elevation</span><span class="p">(</span><span class="n">degree</span><span class="p">,</span> <span class="n">ctrlpts</span><span class="p">):</span>
+	<span class="sd">&quot;&quot;&quot;Elevate a curve degree using python NURBS helpers.degree_elevation</span>
+
+<span class="sd">	:param degree: New degree</span>
+<span class="sd">	:param ctrlpts: control point matrix</span>
+<span class="sd">	:return:</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+	<span class="k">return</span> <span class="n">helpers</span><span class="o">.</span><span class="n">degree_elevation</span><span class="p">(</span><span class="n">degree</span><span class="p">,</span> <span class="n">ctrlpts</span><span class="p">)</span></div>
+	
+<div class="viewcode-block" id="refine_knots"><a class="viewcode-back" href="../index.html#nurbsLib_handle.refine_knots">[docs]</a><span class="k">def</span> <span class="nf">refine_knots</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">knot_u</span><span class="p">,</span> <span class="n">knot_v</span><span class="p">,</span> <span class="n">ctrlpts</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+	<span class="sd">&quot;&quot;&quot;Refine a surface by knot insertion using operations.refine_knotvector</span>
+
+<span class="sd">	:param p,q: degree in U and V directions</span>
+<span class="sd">	:param knot_u,knot_v: knot vectors in U and V directions</span>
+<span class="sd">	:param ctrlpts: control point matrix</span>
+<span class="sd">	:param n: refinement density number</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+	<span class="n">surf</span> <span class="o">=</span> <span class="n">init_nurbs</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">knot_u</span><span class="p">,</span> <span class="n">knot_v</span><span class="p">,</span> <span class="n">ctrlpts</span><span class="p">)</span>
+	<span class="n">surf</span> <span class="o">=</span> <span class="n">operations</span><span class="o">.</span><span class="n">refine_knotvector</span><span class="p">(</span><span class="n">surf</span><span class="p">,</span> <span class="p">[</span><span class="n">n</span><span class="p">,</span><span class="n">n</span><span class="p">])</span>
+	<span class="k">return</span> <span class="n">get_nurbs_char</span><span class="p">(</span><span class="n">surf</span><span class="p">)</span></div>
+
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, S.Breumier, O.Lampron.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -5,8 +5,8 @@ import numpy as np
 
 
 def compRval(param, xi, eta, ctrlpts, knotvector_u, knotvector_v, degree_u, degree_v, weights):
-    """
-    Interpolate a field value at a given point using the NURBS shape function
+    """Interpolate a field value at a given point using the NURBS shape function
+
     :param param: field values at the control points
     :param xi, eta: parametric coordinate where to compute the field
     :param ctrlpts: control points
@@ -61,13 +61,13 @@ def compRval(param, xi, eta, ctrlpts, knotvector_u, knotvector_v, degree_u, degr
 
 
 def lookuptablespan(knotVector, k, plotVector, s):
-    """ make a matrix for which A[i] is the knot span in which plotVector[i] lays in
+    """ Make a matrix for which A[i] is the knot span in which plotVector[i] lays in. Source: the NURBS book.
+
     :param knotVector: knotVector to span
     :param k: knotVector length
     :param plotVector: parametric coordinate vector to span in the knotVector
     :param s: plotVector length
-    :return a matrix contaning the knotvector span for each element of plotVector
-    source: the NURBS book
+    :return: a matrix contaning the knotvector span for each element of plotVector
     """
     tablespan = np.zeros((s))
     left = 0
@@ -109,14 +109,14 @@ def BasisFun(i, u, p, U):
 
 
 def BasisFunDers(i, u, p, U, n):
-    """ Compute the basis function and the n-th first derivatives
+    """Compute the basis function and the n-th first derivatives.  Source: the NURBS book.
+
     :param i: knot span for u
     :param u: evaluation point
     :param p: basis order
     :param U: knot vector
     :param n: maximum derivative degree
-    :return matrix ders[p+1,p+1] where ders[i,j] is the value of the i-th derivative of Nj function
-    source: the NURBS book
+    :return: matrix ders[p+1,p+1] where ders[i,j] is the value of the i-th derivative of Nj function
     """
 
     N = np.matrix(np.zeros((p + 1, p + 1)))

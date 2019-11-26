@@ -6,8 +6,7 @@ import numpy as np
 from assembly import make_KF, impose_BC
 from connec_mat import make_IEN_INC, make_IEN_INC_BC
 from impose_pres import compute_Fimp_alt
-from make_geom import build_BC_surf
-from meshOpener import load_geom
+from make_geom import build_BC_surf, load_geom
 from mesh_rule import Gauss_rule
 from plotNurb import plot_nurbs
 from solve import solve_KU
@@ -15,6 +14,7 @@ from solve import solve_KU
 
 def make_holeplate(numrefine, disp_solve, plotGrid=""):
     """ Solve the plate with hole problem with linear elasticity
+
     :param numrefine: Refined mesh number to use
     :param dispSolve: Boolean, activate the result display
     :param plotGrid: "mesh" to superimpose the mesh to the results
@@ -72,11 +72,11 @@ def make_holeplate(numrefine, disp_solve, plotGrid=""):
             toImpose.append(i)
 
     sig_imp = np.matrix([[-10, 0.], [0., 0.]])
-    compute_Fimp_alt(nel_BC, IEN_BC, INC_BC, gp, gw, BC_knot, p, BC_ctrlpts, ctrlpts, BC_corres, nquad, sig_imp, F, toImpose)
+    compute_Fimp_alt(nel_BC, IEN_BC, INC_BC, gp, gw, BC_knot, p, BC_ctrlpts, BC_corres, nquad, sig_imp, F, toImpose)
 
     print("------------------- Solving system (get a cup of coffee ;) )")
     u, f_rea = solve_KU(K, F, free_dofs, fixed_dofs, Ub_vect, nen, method="reduce")
 
     print("------------------- Plotting results")
     to_plot = {"u_x": u[range(0, len(u), 2)], "u_y": u[range(1, len(u), 2)]}
-    plot_nurbs(ctrlpts, knotvector_u, knotvector_v, p, q, u, GP_coord, nel, IEN, to_plot, plotGrid, E_coeff, nu_coeff, disp_solve, numrefine)
+    plot_nurbs(ctrlpts, knotvector_u, knotvector_v, p, q, nel, IEN, to_plot, plotGrid, E_coeff, nu_coeff, disp_solve, numrefine)

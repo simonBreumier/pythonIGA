@@ -1,0 +1,244 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>impose_pres &#8212; pythonIGA 1 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for impose_pres</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Several functions to compute the stress contribution to the force vector</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">math</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">assembly</span> <span class="k">import</span> <span class="n">build_shapeFun</span>
+<span class="kn">from</span> <span class="nn">simonurbs</span> <span class="k">import</span> <span class="n">BasisFunDers</span>
+
+
+<span class="k">def</span> <span class="nf">compute_Fimp</span><span class="p">(</span><span class="n">nel</span><span class="p">,</span> <span class="n">IEN</span><span class="p">,</span> <span class="n">INC</span><span class="p">,</span> <span class="n">gp</span><span class="p">,</span> <span class="n">gw</span><span class="p">,</span> <span class="n">knot_u</span><span class="p">,</span> <span class="n">knot_v</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">ctrlpts</span><span class="p">,</span> <span class="n">dof_BC</span><span class="p">,</span> <span class="n">nquad</span><span class="p">,</span> <span class="n">sig_imp</span><span class="p">,</span> <span class="n">F</span><span class="p">):</span>
+	<span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">nel</span><span class="p">):</span>
+		<span class="n">ni</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">INC</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">IEN</span><span class="p">[</span><span class="n">e</span><span class="p">,</span> <span class="mi">0</span><span class="p">]),</span> <span class="mi">0</span><span class="p">])</span>
+		<span class="n">nj</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">INC</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">IEN</span><span class="p">[</span><span class="n">e</span><span class="p">,</span> <span class="mi">0</span><span class="p">]),</span> <span class="mi">1</span><span class="p">])</span>
+		
+		<span class="k">if</span> <span class="p">(</span><span class="n">knot_u</span><span class="p">[</span><span class="n">ni</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">knot_u</span><span class="p">[</span><span class="n">ni</span><span class="p">])</span> <span class="ow">or</span> <span class="p">(</span><span class="n">knot_v</span><span class="p">[</span><span class="n">nj</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">knot_v</span><span class="p">[</span><span class="n">nj</span><span class="p">]):</span>
+			<span class="k">continue</span>
+			
+		<span class="n">dof_glob</span> <span class="o">=</span> <span class="p">[]</span>
+		<span class="n">dof_loc</span> <span class="o">=</span> <span class="p">[]</span>
+		<span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="n">q</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+			<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="n">p</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+				<span class="n">aa</span> <span class="o">=</span> <span class="n">j</span><span class="o">*</span><span class="p">(</span><span class="n">p</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">+</span><span class="n">i</span>
+				<span class="k">if</span> <span class="mi">2</span><span class="o">*</span><span class="nb">int</span><span class="p">(</span><span class="n">IEN</span><span class="p">[</span><span class="n">e</span><span class="p">,</span> <span class="n">aa</span><span class="p">])</span> <span class="ow">in</span> <span class="n">dof_BC</span><span class="p">:</span>
+					<span class="n">dof_glob</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="nb">int</span><span class="p">(</span><span class="n">IEN</span><span class="p">[</span><span class="n">e</span><span class="p">,</span> <span class="n">aa</span><span class="p">]))</span>
+					<span class="n">dof_loc</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">])</span>
+				<span class="k">if</span> <span class="mi">2</span><span class="o">*</span><span class="nb">int</span><span class="p">(</span><span class="n">IEN</span><span class="p">[</span><span class="n">e</span><span class="p">,</span> <span class="n">aa</span><span class="p">])</span><span class="o">+</span><span class="mi">1</span> <span class="ow">in</span> <span class="n">dof_BC</span><span class="p">:</span>
+					<span class="n">dof_glob</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="nb">int</span><span class="p">(</span><span class="n">IEN</span><span class="p">[</span><span class="n">e</span><span class="p">,</span> <span class="n">aa</span><span class="p">])</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+					<span class="n">dof_loc</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">])</span>
+		<span class="n">lendofs</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">dof_loc</span><span class="p">)</span>
+		<span class="n">F_BC_loc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">lendofs</span><span class="p">))</span>
+		<span class="k">if</span> <span class="ow">not</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dof_loc</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>			
+			<span class="k">for</span> <span class="n">gp_act</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">nquad</span><span class="p">):</span>	
+				<span class="n">R</span><span class="p">,</span> <span class="n">dR_dx</span><span class="p">,</span> <span class="n">J</span><span class="p">,</span> <span class="n">J_mat</span><span class="p">,</span> <span class="n">gp_x</span> <span class="o">=</span> <span class="n">build_shapeFun</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">INC</span><span class="p">,</span> <span class="n">IEN</span><span class="p">,</span> <span class="n">gp</span><span class="p">[</span><span class="n">gp_act</span><span class="p">],</span> <span class="mf">1.</span><span class="p">,</span> <span class="n">knot_u</span><span class="p">,</span> <span class="n">knot_v</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">ctrlpts</span><span class="p">)</span>
+				<span class="n">Jmod_BC</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">J_mat</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="o">+</span><span class="n">J_mat</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">*</span><span class="n">gw</span><span class="p">[</span><span class="n">gp_act</span><span class="p">]</span>
+				<span class="n">build_F_BC</span><span class="p">(</span><span class="n">R</span><span class="p">,</span> <span class="n">Jmod_BC</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">F_BC_loc</span><span class="p">,</span> <span class="n">sig_imp</span><span class="p">,</span> <span class="n">dof_loc</span><span class="p">)</span>		
+
+			<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">lendofs</span><span class="p">):</span>
+				<span class="n">indGlob</span> <span class="o">=</span> <span class="n">dof_glob</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+				<span class="k">if</span> <span class="n">indGlob</span><span class="o">%</span><span class="mi">2</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+					<span class="n">F</span><span class="p">[</span><span class="n">indGlob</span><span class="p">]</span> <span class="o">+=</span> <span class="n">F_BC_loc</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+				<span class="k">else</span><span class="p">:</span>
+					<span class="n">F</span><span class="p">[</span><span class="n">indGlob</span><span class="p">]</span> <span class="o">-=</span> <span class="n">F_BC_loc</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+<span class="k">def</span> <span class="nf">build_F_BC</span><span class="p">(</span><span class="n">R_BC</span><span class="p">,</span> <span class="n">Jmod_BC</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">F_BC_loc</span><span class="p">,</span> <span class="n">sig_imp</span><span class="p">,</span> <span class="n">dof_loc</span><span class="p">):</span>
+	<span class="n">lenDat</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">dof_loc</span><span class="p">)</span>
+	<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">lenDat</span><span class="p">):</span>
+		<span class="n">F_BC_loc</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+=</span> <span class="n">sig_imp</span><span class="o">*</span><span class="n">R_BC</span><span class="p">[</span><span class="n">dof_loc</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">dof_loc</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">]]</span><span class="o">*</span><span class="n">Jmod_BC</span>
+
+<div class="viewcode-block" id="compute_Fimp_alt"><a class="viewcode-back" href="../index.html#impose_pres.compute_Fimp_alt">[docs]</a><span class="k">def</span> <span class="nf">compute_Fimp_alt</span><span class="p">(</span><span class="n">nel</span><span class="p">,</span> <span class="n">IEN</span><span class="p">,</span> <span class="n">INC</span><span class="p">,</span> <span class="n">gp</span><span class="p">,</span> <span class="n">gw</span><span class="p">,</span> <span class="n">knot_u</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">ctrlpts_BC</span><span class="p">,</span> <span class="n">corres_BC</span><span class="p">,</span> <span class="n">nquad</span><span class="p">,</span> <span class="n">sig_imp</span><span class="p">,</span> <span class="n">F</span><span class="p">,</span> <span class="n">toImpose</span><span class="p">):</span>
+	<span class="sd">&quot;&quot;&quot;Compute the imposed stress contribution on the force vector</span>
+
+<span class="sd">	:param nel: number of elements</span>
+<span class="sd">	:param IEN: element to node connectivity matrix</span>
+<span class="sd">	:param INC: globale to local shape function number connectivity matrix</span>
+<span class="sd">	:param gp: Gauss points</span>
+<span class="sd">	:param gw: Gauss weights</span>
+<span class="sd">	:param knot_u: knot vector of the boundary</span>
+<span class="sd">	:param p: boundary degree</span>
+<span class="sd">	:param ctrlpts_BC: boundary control points</span>
+<span class="sd">	:param corres_BC: correspondence table between the boundary nodes and the global nodes</span>
+<span class="sd">	:param nquad: number of quadratic points</span>
+<span class="sd">	:param sig_imp: imposed stress tensor (2x2 np.matrix)</span>
+<span class="sd">	:param F: load vector</span>
+<span class="sd">	:param toImpose: boundary nodes ID to be imposed the stress</span>
+<span class="sd">	:return: Nothing, but changes the load vector F</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+	<span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">nel</span><span class="p">):</span>
+		<span class="n">ni</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">INC</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">IEN</span><span class="p">[</span><span class="n">e</span><span class="p">,</span> <span class="mi">0</span><span class="p">])])</span>
+		
+		<span class="k">if</span> <span class="p">(</span><span class="n">knot_u</span><span class="p">[</span><span class="n">ni</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">knot_u</span><span class="p">[</span><span class="n">ni</span><span class="p">]):</span>
+			<span class="k">continue</span>
+
+		<span class="n">dof_glob</span> <span class="o">=</span> <span class="p">[]</span>
+		<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="n">p</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+			<span class="n">coor_glob</span> <span class="o">=</span> <span class="n">corres_BC</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">IEN</span><span class="p">[</span><span class="n">e</span><span class="p">,</span> <span class="n">i</span><span class="p">])]</span>
+			<span class="n">dof_glob</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">coor_glob</span><span class="p">)</span>
+			<span class="n">dof_glob</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">coor_glob</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+				
+		<span class="n">lendofs</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">dof_glob</span><span class="p">)</span>
+		<span class="n">F_BC_loc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">lendofs</span><span class="p">))</span>
+		<span class="k">if</span> <span class="ow">not</span><span class="p">(</span><span class="n">lendofs</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>			
+			<span class="k">for</span> <span class="n">gp_act</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">nquad</span><span class="p">):</span>	
+				<span class="n">R_BC</span><span class="p">,</span> <span class="n">J</span><span class="p">,</span> <span class="n">dx_dtiltexi</span><span class="p">,</span> <span class="n">dy_dtiltexi</span> <span class="o">=</span> <span class="n">build_shape_BC</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">INC</span><span class="p">,</span> <span class="n">IEN</span><span class="p">,</span> <span class="n">gp</span><span class="p">[</span><span class="n">gp_act</span><span class="p">],</span> <span class="n">knot_u</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">ctrlpts_BC</span><span class="p">)</span>
+				<span class="n">Jmod_BC</span> <span class="o">=</span> <span class="n">gw</span><span class="p">[</span><span class="n">gp_act</span><span class="p">]</span>
+				<span class="n">build_F_BC_alt</span><span class="p">(</span><span class="n">R_BC</span><span class="p">,</span> <span class="n">Jmod_BC</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">F_BC_loc</span><span class="p">,</span> <span class="n">sig_imp</span><span class="p">,</span> <span class="n">ctrlpts_BC</span><span class="p">,</span> <span class="n">ni</span><span class="p">,</span> <span class="n">dx_dtiltexi</span><span class="p">,</span> <span class="n">dy_dtiltexi</span><span class="p">,</span> <span class="n">toImpose</span><span class="p">)</span>
+
+			<span class="n">F</span><span class="p">[</span><span class="n">dof_glob</span><span class="p">]</span> <span class="o">+=</span> <span class="n">F_BC_loc</span></div>
+					
+<div class="viewcode-block" id="build_F_BC_alt"><a class="viewcode-back" href="../index.html#impose_pres.build_F_BC_alt">[docs]</a><span class="k">def</span> <span class="nf">build_F_BC_alt</span><span class="p">(</span><span class="n">R_BC</span><span class="p">,</span> <span class="n">Jmod_BC</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">F_BC_loc</span><span class="p">,</span> <span class="n">sig_imp</span><span class="p">,</span> <span class="n">ctrlpts_BC</span><span class="p">,</span> <span class="n">ni</span><span class="p">,</span> <span class="n">dx_dtiltexi</span><span class="p">,</span> <span class="n">dy_dtiltexi</span><span class="p">,</span> <span class="n">toImpose</span><span class="p">):</span>
+	<span class="sd">&quot;&quot;&quot;Build the local element load vector</span>
+
+<span class="sd">	:param R_BC: shape function values at gauss point</span>
+<span class="sd">	:param Jmod_BC: actual Gauss point name (bad name...)</span>
+<span class="sd">	:param p: curve degree</span>
+<span class="sd">	:param F_BC_loc: local load vector to be filled</span>
+<span class="sd">	:param sig_imp: imposed stress tensor (2x2 np.matrix)</span>
+<span class="sd">	:param ctrlpts_BC: boundary control points (local numbering)</span>
+<span class="sd">	:param ni: initial node number for the actual element</span>
+<span class="sd">	:param dx_dtiltexi,dy_dtiltexi: vector for pull back from the reference element to the geometric space</span>
+<span class="sd">	:param toImpose: Node tom impose sig_imp to</span>
+<span class="sd">	:return: Nothing but changes F_BC_loc</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+	<span class="n">norm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matrix</span><span class="p">([</span><span class="n">dy_dtiltexi</span><span class="p">,</span> <span class="n">dx_dtiltexi</span><span class="p">])</span><span class="o">.</span><span class="n">T</span>
+	<span class="c1">#norm = norm/np.linalg.norm(norm)</span>
+	<span class="n">sigmaNorm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">sig_imp</span><span class="p">,</span> <span class="n">norm</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">tolist</span><span class="p">()[</span><span class="mi">0</span><span class="p">])</span>
+	<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">p</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+		<span class="k">if</span> <span class="n">ni</span><span class="o">-</span><span class="n">i</span> <span class="ow">in</span> <span class="n">toImpose</span><span class="p">:</span>
+		<span class="c1">#if ctrlpts_BC[i,0] == -4.:</span>
+			<span class="n">F_BC_loc</span><span class="p">[</span><span class="mi">2</span><span class="o">*</span><span class="n">i</span><span class="p">:</span><span class="mi">2</span><span class="o">*</span><span class="n">i</span><span class="o">+</span><span class="mi">2</span><span class="p">]</span> <span class="o">+=</span> <span class="n">R_BC</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">*</span><span class="n">Jmod_BC</span><span class="o">*</span><span class="n">sigmaNorm</span></div>
+			<span class="c1">#F_BC_loc[2 * i] += R_BC[i] * Jmod_BC * sig_imp[0,0]*abs(dy_dtiltexi)</span>
+		<span class="c1">#if ctrlpts_BC[ni-i,1] == 4.0:</span>
+			<span class="c1"># F_BC_loc[2*i] += sig_imp*R_BC[i]*Jmod_BC	</span>
+		<span class="c1">#	F_BC_loc[2*i+1] -= sig_imp*R_BC[i]*Jmod_BC*abs(dx_dtiltexi)</span>
+			
+<div class="viewcode-block" id="build_shape_BC"><a class="viewcode-back" href="../index.html#impose_pres.build_shape_BC">[docs]</a><span class="k">def</span> <span class="nf">build_shape_BC</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">INC</span><span class="p">,</span> <span class="n">IEN</span><span class="p">,</span> <span class="n">xi_tilde</span><span class="p">,</span> <span class="n">BC_knot</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">B</span><span class="p">):</span>
+	<span class="sd">&quot;&quot;&quot; Build the boundary shape function and compute its value at the Gauss points</span>
+
+<span class="sd">	:param e: actual element number</span>
+<span class="sd">	:param IEN: element to node connectivity matrix</span>
+<span class="sd">	:param INC: global to local shape function number connectivity matrix</span>
+<span class="sd">	:param xi_tilde: gauss point coordinate</span>
+<span class="sd">	:param BC_knot: boundary knot vector</span>
+<span class="sd">	:param p: boundary degree</span>
+<span class="sd">	:param B: boundary control points</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+	<span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">BC_knot</span><span class="p">)</span>
+	<span class="n">R</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">p</span><span class="o">+</span><span class="mi">1</span><span class="p">))</span>
+	<span class="n">dR_dx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">p</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span> 
+	<span class="n">J</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+	<span class="n">dR_dxi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">p</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span> <span class="c1"># wrt parametric coordinates</span>
+	<span class="n">dx_dxi</span> <span class="o">=</span> <span class="mi">0</span>
+	<span class="n">dy_dxi</span> <span class="o">=</span> <span class="mi">0</span>
+	<span class="n">loc_num</span> <span class="o">=</span> <span class="mi">0</span>
+	<span class="n">sum_xi</span> <span class="o">=</span> <span class="mi">0</span>
+	<span class="n">sum_tot</span> <span class="o">=</span> <span class="mi">0</span>
+	
+	<span class="n">ni</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">INC</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">IEN</span><span class="p">[</span><span class="n">e</span><span class="p">,</span> <span class="mi">0</span><span class="p">])])</span>
+	<span class="n">xi</span> <span class="o">=</span> <span class="mf">0.5</span><span class="o">*</span><span class="p">((</span><span class="n">BC_knot</span><span class="p">[</span><span class="n">ni</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span> <span class="n">BC_knot</span><span class="p">[</span><span class="n">ni</span><span class="p">])</span><span class="o">*</span><span class="n">xi_tilde</span> <span class="o">+</span> <span class="n">BC_knot</span><span class="p">[</span><span class="n">ni</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">BC_knot</span><span class="p">[</span><span class="n">ni</span><span class="p">])</span>
+	
+	<span class="n">dN</span> <span class="o">=</span> <span class="n">BasisFunDers</span><span class="p">(</span><span class="n">ni</span><span class="p">,</span><span class="n">xi</span><span class="p">,</span><span class="n">p</span><span class="p">,</span><span class="n">BC_knot</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+	
+	<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="n">p</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+		<span class="n">loc_num</span> <span class="o">+=</span> <span class="mi">1</span>
+		<span class="n">R</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">dN</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">p</span><span class="o">-</span><span class="n">i</span><span class="p">]</span><span class="o">*</span><span class="n">B</span><span class="p">[</span><span class="n">ni</span><span class="o">-</span><span class="n">i</span><span class="p">,</span><span class="mi">2</span><span class="p">]</span>
+		<span class="n">sum_tot</span> <span class="o">+=</span> <span class="n">R</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+		<span class="n">dR_dxi</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">dN</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="n">p</span><span class="o">-</span><span class="n">i</span><span class="p">]</span><span class="o">*</span><span class="n">B</span><span class="p">[</span><span class="n">ni</span><span class="o">-</span><span class="n">i</span><span class="p">,</span><span class="mi">2</span><span class="p">]</span>
+		<span class="n">sum_xi</span> <span class="o">+=</span> <span class="n">dR_dxi</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span>	
+
+	<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">p</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+		<span class="n">R</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">R</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">/</span><span class="n">sum_tot</span>
+		<span class="n">dR_dxi</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">dR_dxi</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">sum_tot</span> <span class="o">-</span> <span class="n">R</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">*</span><span class="n">sum_xi</span><span class="p">)</span> <span class="o">/</span> <span class="n">sum_tot</span><span class="o">**</span><span class="mi">2</span>
+
+	<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">p</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+		<span class="n">dx_dxi</span> <span class="o">=</span> <span class="n">dx_dxi</span> <span class="o">+</span> <span class="n">B</span><span class="p">[</span><span class="n">ni</span><span class="o">-</span><span class="n">i</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">dR_dxi</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span>
+		<span class="n">dy_dxi</span> <span class="o">=</span> <span class="n">dy_dxi</span> <span class="o">+</span> <span class="n">B</span><span class="p">[</span><span class="n">ni</span><span class="o">-</span><span class="n">i</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="n">dR_dxi</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span>
+
+	<span class="n">dxi_dtildexi</span> <span class="o">=</span> <span class="mf">0.5</span><span class="o">*</span><span class="p">(</span><span class="n">BC_knot</span><span class="p">[</span><span class="n">ni</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">BC_knot</span><span class="p">[</span><span class="n">ni</span><span class="p">])</span>
+	
+	<span class="n">dx_dtiltexi</span> <span class="o">=</span> <span class="n">dx_dxi</span> <span class="o">*</span> <span class="n">dxi_dtildexi</span>
+	<span class="n">dy_dtiltexi</span> <span class="o">=</span> <span class="n">dy_dxi</span> <span class="o">*</span> <span class="n">dxi_dtildexi</span>
+
+	<span class="n">J</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">dx_dtiltexi</span><span class="o">**</span><span class="mi">2</span><span class="o">+</span><span class="n">dy_dtiltexi</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+	
+	<span class="k">return</span> <span class="n">R</span><span class="p">,</span> <span class="n">J</span><span class="p">,</span> <span class="n">dx_dtiltexi</span><span class="p">,</span> <span class="n">dy_dtiltexi</span></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, S.Breumier, O.Lampron.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

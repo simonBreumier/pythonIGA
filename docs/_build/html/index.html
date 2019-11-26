@@ -1,68 +1,720 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Welcome to pythonIGA’s documentation! &#8212; pythonIGA 1 documentation</title>
+    <meta charset="utf-8" />
+    <title>pythonIGA &#8212; pythonIGA 1 documentation</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    './',
-        VERSION:     '1',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
-      };
-    </script>
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
   
+  
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
-  </head>
-  <body>
+  </head><body>
   
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
+          
+
           <div class="body" role="main">
             
-  <div class="section" id="module-make_holeplate">
-<span id="welcome-to-pythoniga-s-documentation"></span><h1>Welcome to pythonIGA’s documentation!<a class="headerlink" href="#module-make_holeplate" title="Permalink to this headline">¶</a></h1>
-<p>Functions to solve the plate with a whole problem.</p>
-<dl class="function">
-<dt id="make_holeplate.make_holeplate">
-<code class="descclassname">make_holeplate.</code><code class="descname">make_holeplate</code><span class="sig-paren">(</span><em>numrefine</em>, <em>disp_solve</em>, <em>plotGrid=''</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/make_holeplate.html#make_holeplate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#make_holeplate.make_holeplate" title="Permalink to this definition">¶</a></dt>
-<dd><p>Solve the plate with hole problem with linear elasticity
-:param numrefine: Refined mesh number to use
-:param dispSolve: Boolean, activate the result display
-:param plotGrid: “mesh” to superimpose the mesh to the results</p>
-</dd></dl>
-
+  <div class="section" id="pythoniga">
+<h1>pythonIGA<a class="headerlink" href="#pythoniga" title="Permalink to this headline">¶</a></h1>
 <div class="toctree-wrapper compound">
 </div>
 </div>
-<div class="section" id="indices-and-tables">
-<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
-<ul class="simple">
-<li><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></li>
-<li><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></li>
-<li><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></li>
+<div class="section" id="module-make_holeplate">
+<span id="plate-with-a-hole"></span><h1>Plate with a hole<a class="headerlink" href="#module-make_holeplate" title="Permalink to this headline">¶</a></h1>
+<p>Functions to solve the plate with a whole problem.</p>
+<dl class="function">
+<dt id="make_holeplate.make_holeplate">
+<code class="sig-prename descclassname">make_holeplate.</code><code class="sig-name descname">make_holeplate</code><span class="sig-paren">(</span><em class="sig-param">numrefine</em>, <em class="sig-param">disp_solve</em>, <em class="sig-param">plotGrid=''</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/make_holeplate.html#make_holeplate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#make_holeplate.make_holeplate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Solve the plate with hole problem with linear elasticity</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>numrefine</strong> – Refined mesh number to use</p></li>
+<li><p><strong>dispSolve</strong> – Boolean, activate the result display</p></li>
+<li><p><strong>plotGrid</strong> – “mesh” to superimpose the mesh to the results</p></li>
 </ul>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-assembly">
+<span id="assembly-module"></span><h1>Assembly module<a class="headerlink" href="#module-assembly" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="assembly.build_Flocal">
+<code class="sig-prename descclassname">assembly.</code><code class="sig-name descname">build_Flocal</code><span class="sig-paren">(</span><em class="sig-param">R</em>, <em class="sig-param">Jmod</em>, <em class="sig-param">Fb</em>, <em class="sig-param">p</em>, <em class="sig-param">q</em>, <em class="sig-param">F_local</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/assembly.html#build_Flocal"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#assembly.build_Flocal" title="Permalink to this definition">¶</a></dt>
+<dd><p>Build local load vector with volume forces</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>R</strong> – shape functions</p></li>
+<li><p><strong>Jmod</strong> – jacobian from the master element to the geometric space</p></li>
+<li><p><strong>Fb</strong> – volume force vector</p></li>
+<li><p><strong>p</strong><strong>,</strong><strong>q</strong> – degrees in U and V directions</p></li>
+<li><p><strong>F_local</strong> – loacl load vector</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>NOthing but changes F_local</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="assembly.build_Klocal">
+<code class="sig-prename descclassname">assembly.</code><code class="sig-name descname">build_Klocal</code><span class="sig-paren">(</span><em class="sig-param">dR_dx</em>, <em class="sig-param">Jmod</em>, <em class="sig-param">p</em>, <em class="sig-param">q</em>, <em class="sig-param">K_local</em>, <em class="sig-param">E</em>, <em class="sig-param">nu</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/assembly.html#build_Klocal"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#assembly.build_Klocal" title="Permalink to this definition">¶</a></dt>
+<dd><p>Build the local K matrix</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dR_dx</strong> – shaper function deriviative at the gauss point</p></li>
+<li><p><strong>Jmod</strong> – Jacobian (from the master element to the geometric space) multiplied by the Gauss weight</p></li>
+<li><p><strong>p</strong><strong>,</strong><strong>q</strong> – degrees in the U and V directions</p></li>
+<li><p><strong>K_local</strong> – local K tensor</p></li>
+<li><p><strong>E</strong> – Youngs modulus</p></li>
+<li><p><strong>nu</strong> – poisson’s ratio</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Nothing but changes K_local</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="assembly.build_shapeFun">
+<code class="sig-prename descclassname">assembly.</code><code class="sig-name descname">build_shapeFun</code><span class="sig-paren">(</span><em class="sig-param">e</em>, <em class="sig-param">INC</em>, <em class="sig-param">IEN</em>, <em class="sig-param">xi_tilde</em>, <em class="sig-param">eta_tilde</em>, <em class="sig-param">knot_u</em>, <em class="sig-param">knot_v</em>, <em class="sig-param">p</em>, <em class="sig-param">q</em>, <em class="sig-param">B</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/assembly.html#build_shapeFun"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#assembly.build_shapeFun" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the shape function values and derivatives at a gauss point</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>e</strong> – actual element number</p></li>
+<li><p><strong>IEN</strong> – element to node connectivity matrix</p></li>
+<li><p><strong>INC</strong> – global to local shape function number connectivity matrix</p></li>
+<li><p><strong>xi_tilde</strong><strong>,</strong><strong>eta_tilde</strong> – gauss point coordinates</p></li>
+<li><p><strong>knot_u</strong><strong>,</strong><strong>knotV</strong> – knot vector</p></li>
+<li><p><strong>p</strong><strong>,</strong><strong>v</strong> – degree in U and V directions</p></li>
+<li><p><strong>B</strong> – Control points</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="assembly.impose_BC">
+<code class="sig-prename descclassname">assembly.</code><code class="sig-name descname">impose_BC</code><span class="sig-paren">(</span><em class="sig-param">Ub</em>, <em class="sig-param">K</em>, <em class="sig-param">F</em>, <em class="sig-param">method</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/assembly.html#impose_BC"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#assembly.impose_BC" title="Permalink to this definition">¶</a></dt>
+<dd><p>Impose Dirichlet boundary conditions (don’t ask me why it’s here)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>Ub</strong> – (nb,3) vectors containing the node to be imposed, the dof number (1 or 2) and the displacement value</p></li>
+<li><p><strong>K</strong> – global K matrix</p></li>
+<li><p><strong>F</strong> – global load vector</p></li>
+<li><p><strong>method</strong> – “reduce” or “penalty</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>F, Ub_vect, free_coord, fixed_coord</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="assembly.make_KF">
+<code class="sig-prename descclassname">assembly.</code><code class="sig-name descname">make_KF</code><span class="sig-paren">(</span><em class="sig-param">knot_u</em>, <em class="sig-param">knot_v</em>, <em class="sig-param">B</em>, <em class="sig-param">p</em>, <em class="sig-param">q</em>, <em class="sig-param">nel</em>, <em class="sig-param">INC</em>, <em class="sig-param">IEN</em>, <em class="sig-param">gp</em>, <em class="sig-param">gw</em>, <em class="sig-param">nquad</em>, <em class="sig-param">E_coeff</em>, <em class="sig-param">nu_coeff</em>, <em class="sig-param">Fb</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/assembly.html#make_KF"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#assembly.make_KF" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the global K and F matrix</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>knot_u</strong><strong>,</strong><strong>knotv</strong> – knot vectors</p></li>
+<li><p><strong>B</strong> – control points</p></li>
+<li><p><strong>p</strong><strong>,</strong><strong>q</strong> – degrees in U and V directions</p></li>
+<li><p><strong>nel</strong> – number of elements</p></li>
+<li><p><strong>INC</strong> – globale to local shape function number connectivity matrix</p></li>
+<li><p><strong>IEN</strong> – element to node connectivity matrix</p></li>
+<li><p><strong>gp</strong> – Gauss points</p></li>
+<li><p><strong>gw</strong> – Gauss weights</p></li>
+<li><p><strong>nquad</strong> – number of quadratic points</p></li>
+<li><p><strong>E_coeff</strong> – Youngs modulus</p></li>
+<li><p><strong>nu_coeff</strong> – poissons ratio</p></li>
+<li><p><strong>Fb</strong> – volume force</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-impose_pres">
+<span id="pressure-enforcement-module"></span><h1>Pressure enforcement module<a class="headerlink" href="#module-impose_pres" title="Permalink to this headline">¶</a></h1>
+<p>Several functions to compute the stress contribution to the force vector</p>
+<dl class="function">
+<dt id="impose_pres.build_F_BC_alt">
+<code class="sig-prename descclassname">impose_pres.</code><code class="sig-name descname">build_F_BC_alt</code><span class="sig-paren">(</span><em class="sig-param">R_BC</em>, <em class="sig-param">Jmod_BC</em>, <em class="sig-param">p</em>, <em class="sig-param">F_BC_loc</em>, <em class="sig-param">sig_imp</em>, <em class="sig-param">ctrlpts_BC</em>, <em class="sig-param">ni</em>, <em class="sig-param">dx_dtiltexi</em>, <em class="sig-param">dy_dtiltexi</em>, <em class="sig-param">toImpose</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/impose_pres.html#build_F_BC_alt"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#impose_pres.build_F_BC_alt" title="Permalink to this definition">¶</a></dt>
+<dd><p>Build the local element load vector</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>R_BC</strong> – shape function values at gauss point</p></li>
+<li><p><strong>Jmod_BC</strong> – actual Gauss point name (bad name…)</p></li>
+<li><p><strong>p</strong> – curve degree</p></li>
+<li><p><strong>F_BC_loc</strong> – local load vector to be filled</p></li>
+<li><p><strong>sig_imp</strong> – imposed stress tensor (2x2 np.matrix)</p></li>
+<li><p><strong>ctrlpts_BC</strong> – boundary control points (local numbering)</p></li>
+<li><p><strong>ni</strong> – initial node number for the actual element</p></li>
+<li><p><strong>dx_dtiltexi</strong><strong>,</strong><strong>dy_dtiltexi</strong> – vector for pull back from the reference element to the geometric space</p></li>
+<li><p><strong>toImpose</strong> – Node tom impose sig_imp to</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Nothing but changes F_BC_loc</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="impose_pres.build_shape_BC">
+<code class="sig-prename descclassname">impose_pres.</code><code class="sig-name descname">build_shape_BC</code><span class="sig-paren">(</span><em class="sig-param">e</em>, <em class="sig-param">INC</em>, <em class="sig-param">IEN</em>, <em class="sig-param">xi_tilde</em>, <em class="sig-param">BC_knot</em>, <em class="sig-param">p</em>, <em class="sig-param">B</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/impose_pres.html#build_shape_BC"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#impose_pres.build_shape_BC" title="Permalink to this definition">¶</a></dt>
+<dd><p>Build the boundary shape function and compute its value at the Gauss points</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>e</strong> – actual element number</p></li>
+<li><p><strong>IEN</strong> – element to node connectivity matrix</p></li>
+<li><p><strong>INC</strong> – global to local shape function number connectivity matrix</p></li>
+<li><p><strong>xi_tilde</strong> – gauss point coordinate</p></li>
+<li><p><strong>BC_knot</strong> – boundary knot vector</p></li>
+<li><p><strong>p</strong> – boundary degree</p></li>
+<li><p><strong>B</strong> – boundary control points</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="impose_pres.compute_Fimp_alt">
+<code class="sig-prename descclassname">impose_pres.</code><code class="sig-name descname">compute_Fimp_alt</code><span class="sig-paren">(</span><em class="sig-param">nel</em>, <em class="sig-param">IEN</em>, <em class="sig-param">INC</em>, <em class="sig-param">gp</em>, <em class="sig-param">gw</em>, <em class="sig-param">knot_u</em>, <em class="sig-param">p</em>, <em class="sig-param">ctrlpts_BC</em>, <em class="sig-param">corres_BC</em>, <em class="sig-param">nquad</em>, <em class="sig-param">sig_imp</em>, <em class="sig-param">F</em>, <em class="sig-param">toImpose</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/impose_pres.html#compute_Fimp_alt"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#impose_pres.compute_Fimp_alt" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the imposed stress contribution on the force vector</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>nel</strong> – number of elements</p></li>
+<li><p><strong>IEN</strong> – element to node connectivity matrix</p></li>
+<li><p><strong>INC</strong> – globale to local shape function number connectivity matrix</p></li>
+<li><p><strong>gp</strong> – Gauss points</p></li>
+<li><p><strong>gw</strong> – Gauss weights</p></li>
+<li><p><strong>knot_u</strong> – knot vector of the boundary</p></li>
+<li><p><strong>p</strong> – boundary degree</p></li>
+<li><p><strong>ctrlpts_BC</strong> – boundary control points</p></li>
+<li><p><strong>corres_BC</strong> – correspondence table between the boundary nodes and the global nodes</p></li>
+<li><p><strong>nquad</strong> – number of quadratic points</p></li>
+<li><p><strong>sig_imp</strong> – imposed stress tensor (2x2 np.matrix)</p></li>
+<li><p><strong>F</strong> – load vector</p></li>
+<li><p><strong>toImpose</strong> – boundary nodes ID to be imposed the stress</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Nothing, but changes the load vector F</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-mesh_rule">
+<span id="gauss-point-generation-module"></span><h1>Gauss point generation module<a class="headerlink" href="#module-mesh_rule" title="Permalink to this headline">¶</a></h1>
+<p>Generate mesh integration rules</p>
+<dl class="function">
+<dt id="mesh_rule.Gauss_rule">
+<code class="sig-prename descclassname">mesh_rule.</code><code class="sig-name descname">Gauss_rule</code><span class="sig-paren">(</span><em class="sig-param">nquad</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/mesh_rule.html#Gauss_rule"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mesh_rule.Gauss_rule" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate gauss points coordinates and weights in the reference element</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>nquad</strong> – number of gauss points (2 or 4 implemented)</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-plotNurb">
+<span id="results-display-module"></span><h1>Results display module<a class="headerlink" href="#module-plotNurb" title="Permalink to this headline">¶</a></h1>
+<p>Displays the results fields by interpolating using the NURBS shape functions</p>
+<dl class="function">
+<dt id="plotNurb.compCoordResVal">
+<code class="sig-prename descclassname">plotNurb.</code><code class="sig-name descname">compCoordResVal</code><span class="sig-paren">(</span><em class="sig-param">paramcoord</em>, <em class="sig-param">xtarg</em>, <em class="sig-param">ytarg</em>, <em class="sig-param">ctrlpts</em>, <em class="sig-param">knotvector_u</em>, <em class="sig-param">knotvector_v</em>, <em class="sig-param">degree_u</em>, <em class="sig-param">degree_v</em>, <em class="sig-param">weights</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plotNurb.html#compCoordResVal"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plotNurb.compCoordResVal" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the  difference between target and actual x, y geometric coordinates given the (xi, eta)
+parametric coordinates, for optimization.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>paramcoord</strong> – [xi, eta] coordinates</p></li>
+<li><p><strong>xtarg</strong><strong>,</strong><strong>ytarg</strong> – target coordinates</p></li>
+<li><p><strong>ctrlpts</strong> – controlpoints</p></li>
+<li><p><strong>knotvector_u</strong><strong>,</strong><strong>knotvector_v</strong> – knotvectors in u and v directions</p></li>
+<li><p><strong>degree_u</strong><strong>,</strong><strong>degree_v</strong> – shape function degree in u and v directions</p></li>
+<li><p><strong>weights</strong> – weight list</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>L2 norm of the difference between target and actual (x,y) vectors</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="plotNurb.findcoord">
+<code class="sig-prename descclassname">plotNurb.</code><code class="sig-name descname">findcoord</code><span class="sig-paren">(</span><em class="sig-param">targ</em>, <em class="sig-param">ctrlpts</em>, <em class="sig-param">knotvector_u</em>, <em class="sig-param">knotvector_v</em>, <em class="sig-param">degree_u</em>, <em class="sig-param">degree_v</em>, <em class="sig-param">weights</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plotNurb.html#findcoord"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plotNurb.findcoord" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find the (xi, eta) coordinates in the parametric space corresponding to a given (x,y) in the geometric space
+using constrained optimization.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>targ</strong> – [x,y] target</p></li>
+<li><p><strong>ctrlpts</strong> – control points</p></li>
+<li><p><strong>knotvector_u</strong><strong>,</strong><strong>knotvector_v</strong> – knot vectors in u and v directions</p></li>
+<li><p><strong>degree_u</strong><strong>,</strong><strong>degree_v</strong> – shape function degree in u and v directions</p></li>
+<li><p><strong>weights</strong> – weight list</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the corresponding [xi, eta] coordinates</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="plotNurb.make_plot_matrix">
+<code class="sig-prename descclassname">plotNurb.</code><code class="sig-name descname">make_plot_matrix</code><span class="sig-paren">(</span><em class="sig-param">ctrlpts</em>, <em class="sig-param">knotvector_u</em>, <em class="sig-param">knotvector_v</em>, <em class="sig-param">degree_u</em>, <em class="sig-param">degree_v</em>, <em class="sig-param">resol</em>, <em class="sig-param">weights</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plotNurb.html#make_plot_matrix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plotNurb.make_plot_matrix" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a C matrix ‘such that C[i,j,k,l] = R[i,j] (xi[k], eta[l]), to plot fields on a grid</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ctrlpts</strong> – controlpoints</p></li>
+<li><p><strong>knotvector_u</strong><strong>,</strong><strong>knotvector_v</strong> – knotvectors in u and v directions</p></li>
+<li><p><strong>degree_u</strong><strong>,</strong><strong>degree_v</strong> – shape function degree in u and v directions</p></li>
+<li><p><strong>resol</strong> – plot grid resolution</p></li>
+<li><p><strong>weights</strong> – weight list</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="plotNurb.plotMesh">
+<code class="sig-prename descclassname">plotNurb.</code><code class="sig-name descname">plotMesh</code><span class="sig-paren">(</span><em class="sig-param">nel</em>, <em class="sig-param">IEN</em>, <em class="sig-param">nobU</em>, <em class="sig-param">ctrlpts</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plotNurb.html#plotMesh"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plotNurb.plotMesh" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot the isogeometric mesh given the controlpoints and connectivity array</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>nel</strong> – Number of elements</p></li>
+<li><p><strong>IEN</strong> – elements to controlpoint connectivity array</p></li>
+<li><p><strong>nobU</strong> – number of nodes in the U direction</p></li>
+<li><p><strong>ctrlpts</strong> – control point matrix</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="plotNurb.plotNode">
+<code class="sig-prename descclassname">plotNurb.</code><code class="sig-name descname">plotNode</code><span class="sig-paren">(</span><em class="sig-param">ctrlpts</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plotNurb.html#plotNode"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plotNurb.plotNode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot the controlpoints</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>ctrlpts</strong> – controlpoint matrix</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="plotNurb.plot_field">
+<code class="sig-prename descclassname">plotNurb.</code><code class="sig-name descname">plot_field</code><span class="sig-paren">(</span><em class="sig-param">SU</em>, <em class="sig-param">SV</em>, <em class="sig-param">SOL</em>, <em class="sig-param">label=''</em>, <em class="sig-param">plotGrid=''</em>, <em class="sig-param">boundlow=-10000</em>, <em class="sig-param">boundsup=-10000</em>, <em class="sig-param">nobU=0</em>, <em class="sig-param">nel=0</em>, <em class="sig-param">IEN=array([0.])</em>, <em class="sig-param">ctrlpts=array([0.])</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plotNurb.html#plot_field"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plotNurb.plot_field" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot a given field on a regular grid</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>SU</strong><strong>,</strong><strong>SV</strong> – X, Y coordinates matrix</p></li>
+<li><p><strong>SOL</strong> – Field matrix</p></li>
+<li><p><strong>label</strong> – Title string</p></li>
+<li><p><strong>plotGrid</strong> – ‘mesh’ if mesh is to be superimposed</p></li>
+<li><p><strong>boundlow</strong><strong>,</strong><strong>boundsup</strong> – contour color lower and upper bounds</p></li>
+<li><p><strong>nobU</strong> – number of CP in U direction (only if plot mesh)</p></li>
+<li><p><strong>nel</strong> – number of elements (only if plot mesh)</p></li>
+<li><p><strong>IEN</strong> – Connectivity table (only if plot mesh)</p></li>
+<li><p><strong>ctrlpts</strong> – Control points (only if plot mesh)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="plotNurb.plot_nurbs">
+<code class="sig-prename descclassname">plotNurb.</code><code class="sig-name descname">plot_nurbs</code><span class="sig-paren">(</span><em class="sig-param">ctrlpts</em>, <em class="sig-param">knotvector_u</em>, <em class="sig-param">knotvector_v</em>, <em class="sig-param">degree_u</em>, <em class="sig-param">degree_v</em>, <em class="sig-param">nel</em>, <em class="sig-param">IEN</em>, <em class="sig-param">toPlot</em>, <em class="sig-param">plotGrid</em>, <em class="sig-param">E</em>, <em class="sig-param">nu</em>, <em class="sig-param">disp_solve</em>, <em class="sig-param">numrefine</em>, <em class="sig-param">meshPrev=array([0.])</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plotNurb.html#plot_nurbs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plotNurb.plot_nurbs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot the result fields on the domain by generating a regular grid in teh parametric space.
+Also compute the strain and stress from the displacement field.
+Exports all the results in files in the SQR_vals directory.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ctrlpts</strong> – control point matrix</p></li>
+<li><p><strong>knotvector_u</strong><strong>,</strong><strong>knotvector_v</strong> – knot vector in u en v direction</p></li>
+<li><p><strong>degree_u</strong><strong>,</strong><strong>degree_v</strong> – shape function degree in u and v directions</p></li>
+<li><p><strong>nel</strong> – number of elements</p></li>
+<li><p><strong>IEN</strong> – elements to controlpoint connectivity array</p></li>
+<li><p><strong>toPlot</strong> – Dictionary containing the fields to plot (dimensions= number of DOFS)</p></li>
+<li><p><strong>plotGrid</strong> – Strin, “mesh” will superimpose the mesh, “</p></li>
+<li><p><strong>E</strong> – Youngs modulus</p></li>
+<li><p><strong>nu</strong> – Poisson ratio</p></li>
+<li><p><strong>disp_solve</strong> – Boolean indicating wether the plots should be displayed or not</p></li>
+<li><p><strong>numrefine</strong> – Refinement number (only used to name the output files)</p></li>
+<li><p><strong>meshPrev</strong> – Previous mesh control points. Use to compare two solutions on two different meshes.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-simonurbs">
+<span id="nurbs-shape-function-module"></span><h1>NURBS shape function module<a class="headerlink" href="#module-simonurbs" title="Permalink to this headline">¶</a></h1>
+<p>Functions to compute NURBS shape function values</p>
+<dl class="function">
+<dt id="simonurbs.BasisFun">
+<code class="sig-prename descclassname">simonurbs.</code><code class="sig-name descname">BasisFun</code><span class="sig-paren">(</span><em class="sig-param">i</em>, <em class="sig-param">u</em>, <em class="sig-param">p</em>, <em class="sig-param">U</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simonurbs.html#BasisFun"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#simonurbs.BasisFun" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the value of the basis function i, of degree p with knots U, at point u
+source: the NURBS book</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="simonurbs.BasisFunDers">
+<code class="sig-prename descclassname">simonurbs.</code><code class="sig-name descname">BasisFunDers</code><span class="sig-paren">(</span><em class="sig-param">i</em>, <em class="sig-param">u</em>, <em class="sig-param">p</em>, <em class="sig-param">U</em>, <em class="sig-param">n</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simonurbs.html#BasisFunDers"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#simonurbs.BasisFunDers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the basis function and the n-th first derivatives.  Source: the NURBS book.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>i</strong> – knot span for u</p></li>
+<li><p><strong>u</strong> – evaluation point</p></li>
+<li><p><strong>p</strong> – basis order</p></li>
+<li><p><strong>U</strong> – knot vector</p></li>
+<li><p><strong>n</strong> – maximum derivative degree</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>matrix ders[p+1,p+1] where ders[i,j] is the value of the i-th derivative of Nj function</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="simonurbs.compRval">
+<code class="sig-prename descclassname">simonurbs.</code><code class="sig-name descname">compRval</code><span class="sig-paren">(</span><em class="sig-param">param</em>, <em class="sig-param">xi</em>, <em class="sig-param">eta</em>, <em class="sig-param">ctrlpts</em>, <em class="sig-param">knotvector_u</em>, <em class="sig-param">knotvector_v</em>, <em class="sig-param">degree_u</em>, <em class="sig-param">degree_v</em>, <em class="sig-param">weights</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simonurbs.html#compRval"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#simonurbs.compRval" title="Permalink to this definition">¶</a></dt>
+<dd><p>Interpolate a field value at a given point using the NURBS shape function</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>param</strong> – field values at the control points</p></li>
+<li><p><strong>eta</strong> (<em>xi</em><em>,</em>) – parametric coordinate where to compute the field</p></li>
+<li><p><strong>ctrlpts</strong> – control points</p></li>
+<li><p><strong>knotvector_v</strong> (<em>knotvector_u</em><em>,</em>) – knot vectors in u and v direction</p></li>
+<li><p><strong>degree_v</strong> (<em>degree_u</em><em>,</em>) – degrees in u and v directions</p></li>
+<li><p><strong>weights</strong> – weight vector for eqch control point</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>float field value</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="simonurbs.lookuptablespan">
+<code class="sig-prename descclassname">simonurbs.</code><code class="sig-name descname">lookuptablespan</code><span class="sig-paren">(</span><em class="sig-param">knotVector</em>, <em class="sig-param">k</em>, <em class="sig-param">plotVector</em>, <em class="sig-param">s</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simonurbs.html#lookuptablespan"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#simonurbs.lookuptablespan" title="Permalink to this definition">¶</a></dt>
+<dd><p>Make a matrix for which A[i] is the knot span in which plotVector[i] lays in. Source: the NURBS book.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>knotVector</strong> – knotVector to span</p></li>
+<li><p><strong>k</strong> – knotVector length</p></li>
+<li><p><strong>plotVector</strong> – parametric coordinate vector to span in the knotVector</p></li>
+<li><p><strong>s</strong> – plotVector length</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a matrix contaning the knotvector span for each element of plotVector</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-solve">
+<span id="linear-system-solving-module"></span><h1>Linear system solving module<a class="headerlink" href="#module-solve" title="Permalink to this headline">¶</a></h1>
+<p>Function to solve the linear system Ku = F</p>
+<dl class="function">
+<dt id="solve.check_symmetric">
+<code class="sig-prename descclassname">solve.</code><code class="sig-name descname">check_symmetric</code><span class="sig-paren">(</span><em class="sig-param">a</em>, <em class="sig-param">tol=1.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/solve.html#check_symmetric"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#solve.check_symmetric" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if matrix a is symmetric withing a given tolerance tol (default 1)</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="solve.solve_KU">
+<code class="sig-prename descclassname">solve.</code><code class="sig-name descname">solve_KU</code><span class="sig-paren">(</span><em class="sig-param">K</em>, <em class="sig-param">F</em>, <em class="sig-param">free_dofs</em>, <em class="sig-param">fixed_dofs</em>, <em class="sig-param">Ub_vect</em>, <em class="sig-param">nen</em>, <em class="sig-param">method='reduce'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/solve.html#solve_KU"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#solve.solve_KU" title="Permalink to this definition">¶</a></dt>
+<dd><p>Solve the system Ku = F using the scipy sparse solver</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>free_dofs</strong> – dofs id where no dirichlet BC was imposed</p></li>
+<li><p><strong>fixed_dofs</strong> – dofs id where dirichlet BC was imposed</p></li>
+<li><p><strong>Ub_vect</strong> – Dirichlet BC list</p></li>
+<li><p><strong>method</strong> – “reduce” (default) for solving only on unconstrained dofs</p></li>
+<li><p><strong>nen</strong> – number of nodes</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>displacement u and reaction forces f_rea</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-make_geom">
+<span id="geometry-generation-module"></span><h1>Geometry generation module<a class="headerlink" href="#module-make_geom" title="Permalink to this headline">¶</a></h1>
+<p>Different functions to generates nurbs from a description or from a file</p>
+<dl class="function">
+<dt id="make_geom.build_BC_surf">
+<code class="sig-prename descclassname">make_geom.</code><code class="sig-name descname">build_BC_surf</code><span class="sig-paren">(</span><em class="sig-param">knotvector_u</em>, <em class="sig-param">ctrlpts</em>, <em class="sig-param">idsurf</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/make_geom.html#build_BC_surf"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#make_geom.build_BC_surf" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a nurbs curve describing one boundary of a nurbs. Source: geoPDE</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>knotvector_u</strong> – knot vector in u direction</p></li>
+<li><p><strong>ctrlpts</strong> – control points</p></li>
+<li><p><strong>idsurf</strong> – if of the boundary to be generated</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>BC_ctrlpts, BC_knot, BC_corres (correspondence table between the boundary nodes and the global nodes)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="make_geom.load_geom">
+<code class="sig-prename descclassname">make_geom.</code><code class="sig-name descname">load_geom</code><span class="sig-paren">(</span><em class="sig-param">geom_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/make_geom.html#load_geom"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#make_geom.load_geom" title="Permalink to this definition">¶</a></dt>
+<dd><p>Import a NURBS geometry defined by a JSON object with following parameters:</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>knotVectorU/V</strong> – knot vector list in U and V direction</p></li>
+<li><p><strong>p</strong><strong>,</strong><strong>q</strong> – NURBS order in U and V directions</p></li>
+<li><p><strong>controlPoints</strong> – control point (x,y) coordinate list sorted by U</p></li>
+<li><p><strong>weights</strong> – NURBS weight associated to each control point</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="make_geom.make_beam2">
+<code class="sig-prename descclassname">make_geom.</code><code class="sig-name descname">make_beam2</code><span class="sig-paren">(</span><em class="sig-param">L</em>, <em class="sig-param">h</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/make_geom.html#make_beam2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#make_geom.make_beam2" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a degree 2 beam</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>h</strong> – beam thickness</p></li>
+<li><p><strong>L</strong> – beam length</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>p, q, ctrlpts, knotvector_u, knotvector_v</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="make_geom.make_beam3">
+<code class="sig-prename descclassname">make_geom.</code><code class="sig-name descname">make_beam3</code><span class="sig-paren">(</span><em class="sig-param">L</em>, <em class="sig-param">h</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/make_geom.html#make_beam3"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#make_geom.make_beam3" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a degree 3 beam</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>h</strong> – beam thickness</p></li>
+<li><p><strong>L</strong> – beam length</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>p, q, ctrlpts, knotvector_u, knotvector_v</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="make_geom.make_holeplate">
+<code class="sig-prename descclassname">make_geom.</code><code class="sig-name descname">make_holeplate</code><span class="sig-paren">(</span><em class="sig-param">R</em>, <em class="sig-param">L</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/make_geom.html#make_holeplate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#make_geom.make_holeplate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a degree 2 plate with whole with two repeated nodes</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>R</strong> – Whole radius</p></li>
+<li><p><strong>L</strong> – Plate length</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>p, q, ctrlpts, knotvector_u, knotvector_v</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="make_geom.make_holeplate3">
+<code class="sig-prename descclassname">make_geom.</code><code class="sig-name descname">make_holeplate3</code><span class="sig-paren">(</span><em class="sig-param">R</em>, <em class="sig-param">L</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/make_geom.html#make_holeplate3"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#make_geom.make_holeplate3" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a degree 3 (u) and 2 (v) plate with whole without repeated node. Source: geoPDE</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>R</strong> – Whole radius</p></li>
+<li><p><strong>L</strong> – Plate length</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>p, q, ctrlpts, knotvector_u, knotvector_v</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="make_geom.make_holeplate_deg3">
+<code class="sig-prename descclassname">make_geom.</code><code class="sig-name descname">make_holeplate_deg3</code><span class="sig-paren">(</span><em class="sig-param">R</em>, <em class="sig-param">L</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/make_geom.html#make_holeplate_deg3"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#make_geom.make_holeplate_deg3" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a degree 3 plate with whole with two repeated nodes</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>R</strong> – Whole radius</p></li>
+<li><p><strong>L</strong> – Plate length</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>p, q, ctrlpts, knotvector_u, knotvector_v</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="make_geom.make_square">
+<code class="sig-prename descclassname">make_geom.</code><code class="sig-name descname">make_square</code><span class="sig-paren">(</span><em class="sig-param">L</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/make_geom.html#make_square"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#make_geom.make_square" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a degree 3 simple square</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>L</strong> – Square length</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>p, q, ctrlpts, knotvector_u, knotvector_v</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-nurbsLib_handle">
+<span id="python-nurbs-interface-module"></span><h1>Python NURBS interface module<a class="headerlink" href="#module-nurbsLib_handle" title="Permalink to this headline">¶</a></h1>
+<p>Interfacing function with the python NURBS library
+<a class="reference external" href="https://nurbs-python.readthedocs.io/en/latest/">https://nurbs-python.readthedocs.io/en/latest/</a></p>
+<dl class="function">
+<dt id="nurbsLib_handle.degree_elevation">
+<code class="sig-prename descclassname">nurbsLib_handle.</code><code class="sig-name descname">degree_elevation</code><span class="sig-paren">(</span><em class="sig-param">degree</em>, <em class="sig-param">ctrlpts</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nurbsLib_handle.html#degree_elevation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#nurbsLib_handle.degree_elevation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Elevate a curve degree using python NURBS helpers.degree_elevation</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>degree</strong> – New degree</p></li>
+<li><p><strong>ctrlpts</strong> – control point matrix</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="nurbsLib_handle.get_nurbs_char">
+<code class="sig-prename descclassname">nurbsLib_handle.</code><code class="sig-name descname">get_nurbs_char</code><span class="sig-paren">(</span><em class="sig-param">surf</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nurbsLib_handle.html#get_nurbs_char"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#nurbsLib_handle.get_nurbs_char" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract NURBS characteristics from a python NURBS surface</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>surf</strong> – python NURBS surface object</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="nurbsLib_handle.init_nurbs">
+<code class="sig-prename descclassname">nurbsLib_handle.</code><code class="sig-name descname">init_nurbs</code><span class="sig-paren">(</span><em class="sig-param">p</em>, <em class="sig-param">q</em>, <em class="sig-param">knot_u</em>, <em class="sig-param">knot_v</em>, <em class="sig-param">ctrlpts</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nurbsLib_handle.html#init_nurbs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#nurbsLib_handle.init_nurbs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a python NURBS surface object</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>p</strong><strong>,</strong><strong>q</strong> – degree in U and V directions</p></li>
+<li><p><strong>knot_u</strong><strong>,</strong><strong>knot_v</strong> – knot vectors in U and V directions</p></li>
+<li><p><strong>ctrlpts</strong> – control point matrix</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="nurbsLib_handle.plot_BC">
+<code class="sig-prename descclassname">nurbsLib_handle.</code><code class="sig-name descname">plot_BC</code><span class="sig-paren">(</span><em class="sig-param">BC_ctrlpts</em>, <em class="sig-param">BC_knot</em>, <em class="sig-param">p</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nurbsLib_handle.html#plot_BC"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#nurbsLib_handle.plot_BC" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot a boundary curve</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>BC_ctrlpts</strong> – boundary control points</p></li>
+<li><p><strong>BC_knot</strong> – boundary knot vector</p></li>
+<li><p><strong>p</strong> – boundary degree</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="nurbsLib_handle.refine_knots">
+<code class="sig-prename descclassname">nurbsLib_handle.</code><code class="sig-name descname">refine_knots</code><span class="sig-paren">(</span><em class="sig-param">p</em>, <em class="sig-param">q</em>, <em class="sig-param">knot_u</em>, <em class="sig-param">knot_v</em>, <em class="sig-param">ctrlpts</em>, <em class="sig-param">n</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nurbsLib_handle.html#refine_knots"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#nurbsLib_handle.refine_knots" title="Permalink to this definition">¶</a></dt>
+<dd><p>Refine a surface by knot insertion using operations.refine_knotvector</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>p</strong><strong>,</strong><strong>q</strong> – degree in U and V directions</p></li>
+<li><p><strong>knot_u</strong><strong>,</strong><strong>knot_v</strong> – knot vectors in U and V directions</p></li>
+<li><p><strong>ctrlpts</strong> – control point matrix</p></li>
+<li><p><strong>n</strong> – refinement density number</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
 </div>
 
 
           </div>
+          
         </div>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
@@ -74,13 +726,13 @@
 </ul>
 </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <div><input type="text" name="q" /></div>
-      <div><input type="submit" value="Go" /></div>
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
     </form>
+    </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -91,8 +743,8 @@
       &copy;2019, S.Breumier, O.Lampron.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.7</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.8</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
       <a href="_sources/index.rst.txt"

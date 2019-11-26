@@ -7,20 +7,18 @@ from scipy.sparse.linalg import spsolve
 
 
 def check_symmetric(a, tol=1.):
-    """
-    Check if matrix a is symmetric withing a given tolerance tol (default 1)
+    """Check if matrix a is symmetric withing a given tolerance tol (default 1)
     """
     return np.all(np.abs(a - a.T) < tol)
 
 
 def solve_KU(K, F, free_dofs, fixed_dofs, Ub_vect, nen, method="reduce"):
-    """
-    Solve the system Ku = F using the scipy sparse solver
+    """Solve the system Ku = F using the scipy sparse solver
+
     :param free_dofs: dofs id where no dirichlet BC was imposed
     :param fixed_dofs: dofs id where dirichlet BC was imposed
     :param Ub_vect: Dirichlet BC list
-    :param method: "reduce" (default) for solving only on unconstrained dofs,
-                   "penalty" for penalty inforcement (not working yet)
+    :param method: "reduce" (default) for solving only on unconstrained dofs
     :param nen: number of nodes
     :return: displacement u and reaction forces f_rea
     """

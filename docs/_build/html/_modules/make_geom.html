@@ -1,0 +1,368 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>make_geom &#8212; pythonIGA 1 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for make_geom</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Different functions to generates nurbs from a description or from a file</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">json</span>
+
+
+<div class="viewcode-block" id="load_geom"><a class="viewcode-back" href="../index.html#make_geom.load_geom">[docs]</a><span class="k">def</span> <span class="nf">load_geom</span><span class="p">(</span><span class="n">geom_name</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Import a NURBS geometry defined by a JSON object with following parameters:</span>
+
+<span class="sd">    :param knotVectorU/V: knot vector list in U and V direction</span>
+<span class="sd">    :param p,q: NURBS order in U and V directions</span>
+<span class="sd">    :param controlPoints: control point (x,y) coordinate list sorted by U</span>
+<span class="sd">    :param weights: NURBS weight associated to each control point</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">geom_name</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">mesh_dat</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+
+    <span class="n">knot_u</span> <span class="o">=</span> <span class="n">mesh_dat</span><span class="p">[</span><span class="s1">&#39;knotVectorU&#39;</span><span class="p">]</span>
+    <span class="n">knot_v</span> <span class="o">=</span> <span class="n">mesh_dat</span><span class="p">[</span><span class="s1">&#39;knotVectorV&#39;</span><span class="p">]</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">mesh_dat</span><span class="p">[</span><span class="s1">&#39;pU&#39;</span><span class="p">]</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="n">mesh_dat</span><span class="p">[</span><span class="s1">&#39;pV&#39;</span><span class="p">]</span>
+    <span class="n">nob_u</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">knot_u</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">p</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">nob_v</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">knot_v</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">q</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">ctrl_temp</span> <span class="o">=</span> <span class="n">mesh_dat</span><span class="p">[</span><span class="s1">&#39;controlPoints&#39;</span><span class="p">]</span>
+
+    <span class="n">ctrl_pts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nob_u</span><span class="p">,</span> <span class="n">nob_v</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">nob_u</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">nob_v</span><span class="p">):</span>
+            <span class="n">ctrl_pts</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">ctrl_temp</span><span class="p">[</span><span class="n">j</span> <span class="o">*</span> <span class="n">nob_u</span> <span class="o">+</span> <span class="n">i</span><span class="p">][:]</span>
+
+    <span class="n">ctrl_pts</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">mesh_dat</span><span class="p">[</span><span class="s1">&#39;weights&#39;</span><span class="p">],</span> <span class="p">(</span><span class="n">nob_u</span><span class="p">,</span> <span class="n">nob_v</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">knot_u</span><span class="p">,</span> <span class="n">knot_v</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">nob_u</span><span class="p">,</span> <span class="n">nob_v</span><span class="p">,</span> <span class="n">ctrl_pts</span></div>
+
+
+<div class="viewcode-block" id="build_BC_surf"><a class="viewcode-back" href="../index.html#make_geom.build_BC_surf">[docs]</a><span class="k">def</span> <span class="nf">build_BC_surf</span><span class="p">(</span><span class="n">knotvector_u</span><span class="p">,</span> <span class="n">ctrlpts</span><span class="p">,</span> <span class="n">idsurf</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Generate a nurbs curve describing one boundary of a nurbs. Source: geoPDE</span>
+
+<span class="sd">    :param knotvector_u: knot vector in u direction</span>
+<span class="sd">    :param ctrlpts: control points</span>
+<span class="sd">    :param idsurf: if of the boundary to be generated</span>
+<span class="sd">    :return: BC_ctrlpts, BC_knot, BC_corres (correspondence table between the boundary nodes and the global nodes)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">nobU</span><span class="p">,</span> <span class="n">nobV</span> <span class="o">=</span> <span class="n">ctrlpts</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">idsurf</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">BC_ctrlpts</span> <span class="o">=</span> <span class="n">ctrlpts</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">,</span> <span class="p">:]</span>
+    <span class="k">elif</span> <span class="n">idsurf</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="n">BC_ctrlpts</span> <span class="o">=</span> <span class="n">ctrlpts</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span>
+    <span class="k">elif</span> <span class="n">idsurf</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+        <span class="n">BC_ctrlpts</span> <span class="o">=</span> <span class="n">ctrlpts</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span>
+    <span class="k">elif</span> <span class="n">idsurf</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
+        <span class="n">BC_ctrlpts</span> <span class="o">=</span> <span class="n">ctrlpts</span><span class="p">[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Wrong boundary ID number (only 1 to 4 accepted)&quot;</span><span class="p">)</span>
+
+    <span class="n">BC_corres</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">nobU</span><span class="p">):</span>
+        <span class="n">BC_corres</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">nobV</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">nobU</span> <span class="o">+</span> <span class="n">i</span><span class="p">)</span>
+    <span class="n">BC_knot</span> <span class="o">=</span> <span class="n">knotvector_u</span>
+    <span class="n">BC_knot</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">BC_knot</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">BC_ctrlpts</span><span class="p">,</span> <span class="n">BC_knot</span><span class="p">,</span> <span class="n">BC_corres</span></div>
+
+
+<div class="viewcode-block" id="make_holeplate_deg3"><a class="viewcode-back" href="../index.html#make_geom.make_holeplate_deg3">[docs]</a><span class="k">def</span> <span class="nf">make_holeplate_deg3</span><span class="p">(</span><span class="n">R</span><span class="p">,</span> <span class="n">L</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Generate a degree 3 plate with whole with two repeated nodes</span>
+
+<span class="sd">    :param R: Whole radius</span>
+<span class="sd">    :param L: Plate length</span>
+<span class="sd">    :return: p, q, ctrlpts, knotvector_u, knotvector_v</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="mi">3</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="mi">3</span>
+
+    <span class="n">ctrlpts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">6</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+    <span class="n">ctrlpts</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="p">[[</span><span class="o">-</span><span class="n">R</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                        <span class="p">[</span><span class="o">-</span><span class="mf">0.9024</span><span class="p">,</span> <span class="mf">0.2357</span><span class="p">,</span> <span class="mf">0.9024</span><span class="p">],</span>
+                        <span class="p">[</span><span class="o">-</span><span class="mf">0.7702</span><span class="p">,</span> <span class="mf">0.4369</span><span class="p">,</span> <span class="mf">0.8536</span><span class="p">],</span>
+                        <span class="p">[</span><span class="o">-</span><span class="mf">0.4369</span><span class="p">,</span> <span class="mf">0.7702</span><span class="p">,</span> <span class="mf">0.8536</span><span class="p">],</span>
+                        <span class="p">[</span><span class="o">-</span><span class="mf">0.2357</span><span class="p">,</span> <span class="mf">0.9024</span><span class="p">,</span> <span class="mf">0.9024</span><span class="p">],</span>
+                        <span class="p">[</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">]]</span>
+
+    <span class="n">ctrlpts</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="p">[[</span><span class="o">-</span><span class="mf">2.</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                        <span class="p">[</span><span class="o">-</span><span class="mf">1.9675</span><span class="p">,</span> <span class="mf">0.4119</span><span class="p">,</span> <span class="mf">0.9675</span><span class="p">],</span>
+                        <span class="p">[</span><span class="o">-</span><span class="mf">1.7290</span><span class="p">,</span> <span class="mf">0.8401</span><span class="p">,</span> <span class="mf">0.9512</span><span class="p">],</span>
+                        <span class="p">[</span><span class="o">-</span><span class="mf">0.8401</span><span class="p">,</span> <span class="mf">1.7290</span><span class="p">,</span> <span class="mf">0.9512</span><span class="p">],</span>
+                        <span class="p">[</span><span class="o">-</span><span class="mf">0.4119</span><span class="p">,</span> <span class="mf">1.967</span><span class="p">,</span> <span class="mf">0.9675</span><span class="p">],</span>
+                        <span class="p">[</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">2.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">]]</span>
+
+    <span class="n">ctrlpts</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="p">[[</span><span class="o">-</span><span class="mf">3.</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                        <span class="p">[</span><span class="o">-</span><span class="mf">3.</span><span class="p">,</span> <span class="mf">1.2222</span><span class="p">,</span> <span class="mf">1.</span><span class="p">],</span>
+                        <span class="p">[</span><span class="o">-</span><span class="mf">2.8056</span><span class="p">,</span> <span class="mf">2.0278</span><span class="p">,</span> <span class="mf">1.</span><span class="p">],</span>
+                        <span class="p">[</span><span class="o">-</span><span class="mf">2.0278</span><span class="p">,</span> <span class="mf">2.8056</span><span class="p">,</span> <span class="mf">1.</span><span class="p">],</span>
+                        <span class="p">[</span><span class="o">-</span><span class="mf">1.2222</span><span class="p">,</span> <span class="mf">3.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">],</span>
+                        <span class="p">[</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">3.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">]]</span>
+
+    <span class="n">ctrlpts</span><span class="p">[:,</span> <span class="mi">3</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="p">[[</span><span class="o">-</span><span class="mi">4</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                        <span class="p">[</span><span class="o">-</span><span class="mi">4</span><span class="p">,</span> <span class="mf">2.6667</span><span class="p">,</span> <span class="mf">1.</span><span class="p">],</span>
+                        <span class="p">[</span><span class="o">-</span><span class="mi">4</span><span class="p">,</span> <span class="mf">4.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">],</span>
+                        <span class="p">[</span><span class="o">-</span><span class="mi">4</span><span class="p">,</span> <span class="mf">4.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">],</span>
+                        <span class="p">[</span><span class="o">-</span><span class="mf">2.6667</span><span class="p">,</span> <span class="mf">4.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">],</span>
+                        <span class="p">[</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">4.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">]]</span>
+    <span class="c1"># Set knot vectors</span>
+    <span class="n">knotvector_u</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="n">knotvector_v</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">p</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">ctrlpts</span><span class="p">,</span> <span class="n">knotvector_u</span><span class="p">,</span> <span class="n">knotvector_v</span></div>
+
+
+<div class="viewcode-block" id="make_holeplate"><a class="viewcode-back" href="../index.html#make_geom.make_holeplate">[docs]</a><span class="k">def</span> <span class="nf">make_holeplate</span><span class="p">(</span><span class="n">R</span><span class="p">,</span> <span class="n">L</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Generate a degree 2 plate with whole with two repeated nodes</span>
+
+<span class="sd">    :param R: Whole radius</span>
+<span class="sd">    :param L: Plate length</span>
+<span class="sd">    :return: p, q, ctrlpts, knotvector_u, knotvector_v</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="mi">2</span>
+
+    <span class="n">w</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+    <span class="n">ctrlpts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">4</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+    <span class="n">fact</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">6</span>
+    <span class="n">ctrlpts</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="p">[[</span><span class="o">-</span><span class="n">R</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                        <span class="p">[</span><span class="o">-</span><span class="n">R</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">fact</span><span class="p">),</span> <span class="n">R</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">fact</span><span class="p">),</span> <span class="n">w</span><span class="p">],</span>
+                        <span class="p">[</span><span class="o">-</span><span class="n">R</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">fact</span><span class="p">),</span> <span class="n">R</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">fact</span><span class="p">),</span> <span class="n">w</span><span class="p">],</span>
+                        <span class="p">[</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="mi">1</span><span class="p">]]</span>
+
+    <span class="n">ctrlpts</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="p">[[</span><span class="o">-</span><span class="mf">2.5</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">],</span>
+                        <span class="p">[</span><span class="o">-</span><span class="mf">2.5</span><span class="p">,</span> <span class="mf">0.75</span><span class="p">,</span> <span class="mf">1.</span><span class="p">],</span>
+                        <span class="p">[</span><span class="o">-</span><span class="mf">0.75</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">,</span> <span class="mf">1.</span><span class="p">],</span>
+                        <span class="p">[</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">,</span> <span class="mf">1.</span><span class="p">]];</span>
+
+    <span class="n">ctrlpts</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="p">[[</span><span class="o">-</span><span class="n">L</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">],</span>
+                        <span class="p">[</span><span class="o">-</span><span class="n">L</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="mf">1.</span><span class="p">],</span>
+                        <span class="p">[</span><span class="o">-</span><span class="n">L</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="mf">1.</span><span class="p">],</span>
+                        <span class="p">[</span><span class="mf">0.</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="mf">1.</span><span class="p">]]</span>
+    <span class="c1"># Set knot vectors</span>
+    <span class="n">knotvector_u</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="n">knotvector_v</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">p</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">ctrlpts</span><span class="p">,</span> <span class="n">knotvector_u</span><span class="p">,</span> <span class="n">knotvector_v</span></div>
+
+
+<div class="viewcode-block" id="make_holeplate3"><a class="viewcode-back" href="../index.html#make_geom.make_holeplate3">[docs]</a><span class="k">def</span> <span class="nf">make_holeplate3</span><span class="p">(</span><span class="n">R</span><span class="p">,</span> <span class="n">L</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Generate a degree 3 (u) and 2 (v) plate with whole without repeated node. Source: geoPDE</span>
+
+<span class="sd">        :param R: Whole radius</span>
+<span class="sd">        :param L: Plate length</span>
+<span class="sd">        :return: p, q, ctrlpts, knotvector_u, knotvector_v</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="mi">3</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="mi">2</span>
+
+    <span class="n">ctrlpts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">7</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+    <span class="n">ctrlpts</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="p">[[</span><span class="o">-</span><span class="n">R</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                        <span class="p">[</span><span class="o">-</span><span class="mf">0.9024</span><span class="p">,</span> <span class="mf">0.2357</span><span class="p">,</span> <span class="mf">0.9024</span><span class="p">],</span>
+                        <span class="p">[</span><span class="o">-</span><span class="mf">0.7702</span><span class="p">,</span> <span class="mf">0.4368</span><span class="p">,</span> <span class="mf">0.8536</span><span class="p">],</span>
+                        <span class="p">[</span><span class="o">-</span><span class="mf">0.6036</span><span class="p">,</span> <span class="mf">0.6036</span><span class="p">,</span> <span class="mf">0.8536</span><span class="p">],</span>
+                        <span class="p">[</span><span class="o">-</span><span class="mf">0.4369</span><span class="p">,</span> <span class="mf">0.7702</span><span class="p">,</span> <span class="mf">0.8536</span><span class="p">],</span>
+                        <span class="p">[</span><span class="o">-</span><span class="mf">0.2357</span><span class="p">,</span> <span class="mf">0.9024</span><span class="p">,</span> <span class="mf">0.9024</span><span class="p">],</span>
+                        <span class="p">[</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">]]</span>
+
+    <span class="n">ctrlpts</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="p">[[</span><span class="o">-</span><span class="mf">2.5</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                        <span class="p">[</span><span class="o">-</span><span class="mf">2.4512</span><span class="p">,</span> <span class="mf">0.7845</span><span class="p">,</span> <span class="mf">0.9512</span><span class="p">],</span>
+                        <span class="p">[</span><span class="o">-</span><span class="mf">2.3851</span><span class="p">,</span> <span class="mf">1.5518</span><span class="p">,</span> <span class="mf">0.9268</span><span class="p">],</span>
+                        <span class="p">[</span><span class="o">-</span><span class="mf">2.3018</span><span class="p">,</span> <span class="mf">2.3018</span><span class="p">,</span> <span class="mf">0.9268</span><span class="p">],</span>
+                        <span class="p">[</span><span class="o">-</span><span class="mf">1.5518</span><span class="p">,</span> <span class="mf">2.3851</span><span class="p">,</span> <span class="mf">0.9268</span><span class="p">],</span>
+                        <span class="p">[</span><span class="o">-</span><span class="mf">0.7845</span><span class="p">,</span> <span class="mf">2.4512</span><span class="p">,</span> <span class="mf">0.9512</span><span class="p">],</span>
+                        <span class="p">[</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">,</span> <span class="mf">1.</span><span class="p">]]</span>
+
+    <span class="n">ctrlpts</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="p">[[</span><span class="o">-</span><span class="mf">4.</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                        <span class="p">[</span><span class="o">-</span><span class="mf">4.</span><span class="p">,</span> <span class="mf">1.3333</span><span class="p">,</span> <span class="mf">1.</span><span class="p">],</span>
+                        <span class="p">[</span><span class="o">-</span><span class="mf">4.</span><span class="p">,</span> <span class="mf">2.6667</span><span class="p">,</span> <span class="mf">1.</span><span class="p">],</span>
+                        <span class="p">[</span><span class="o">-</span><span class="mf">4.</span><span class="p">,</span> <span class="mf">4.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">],</span>
+                        <span class="p">[</span><span class="o">-</span><span class="mf">2.6667</span><span class="p">,</span> <span class="mf">4.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">],</span>
+                        <span class="p">[</span><span class="o">-</span><span class="mf">1.3333</span><span class="p">,</span> <span class="mf">4.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">],</span>
+                        <span class="p">[</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">4.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">]]</span>
+
+    <span class="c1"># Set knot vectors</span>
+    <span class="n">knotvector_u</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="n">knotvector_v</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">p</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">ctrlpts</span><span class="p">,</span> <span class="n">knotvector_u</span><span class="p">,</span> <span class="n">knotvector_v</span></div>
+
+
+<div class="viewcode-block" id="make_square"><a class="viewcode-back" href="../index.html#make_geom.make_square">[docs]</a><span class="k">def</span> <span class="nf">make_square</span><span class="p">(</span><span class="n">L</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Generate a degree 3 simple square</span>
+
+<span class="sd">        :param L: Square length</span>
+<span class="sd">        :return: p, q, ctrlpts, knotvector_u, knotvector_v</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="mi">3</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="mi">3</span>
+
+    <span class="n">ctrlpts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+    <span class="n">ctrlpts</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                        <span class="p">[</span><span class="mf">0.333</span> <span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                        <span class="p">[</span><span class="mf">0.667</span> <span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                        <span class="p">[</span><span class="n">L</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]]</span>
+
+    <span class="n">ctrlpts</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.333</span> <span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                        <span class="p">[</span><span class="mf">0.333</span> <span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="mf">0.333</span> <span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                        <span class="p">[</span><span class="mf">0.667</span> <span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="mf">0.333</span> <span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                        <span class="p">[</span><span class="n">L</span><span class="p">,</span> <span class="mf">0.333</span> <span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="mi">1</span><span class="p">]]</span>
+
+    <span class="n">ctrlpts</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.667</span> <span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                        <span class="p">[</span><span class="mf">0.333</span> <span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="mf">0.667</span> <span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                        <span class="p">[</span><span class="mf">0.667</span> <span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="mf">0.667</span> <span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                        <span class="p">[</span><span class="n">L</span><span class="p">,</span> <span class="mf">0.667</span> <span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="mi">1</span><span class="p">]]</span>
+
+    <span class="n">ctrlpts</span><span class="p">[:,</span> <span class="mi">3</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">0</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                        <span class="p">[</span><span class="mf">0.333</span> <span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                        <span class="p">[</span><span class="mf">0.667</span> <span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                        <span class="p">[</span><span class="n">L</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="mi">1</span><span class="p">]]</span>
+
+    <span class="c1"># Set knot vectors</span>
+    <span class="n">knotvector_u</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="n">knotvector_v</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">p</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">ctrlpts</span><span class="p">,</span> <span class="n">knotvector_u</span><span class="p">,</span> <span class="n">knotvector_v</span></div>
+
+
+<div class="viewcode-block" id="make_beam2"><a class="viewcode-back" href="../index.html#make_geom.make_beam2">[docs]</a><span class="k">def</span> <span class="nf">make_beam2</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="n">h</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Generate a degree 2 beam</span>
+
+<span class="sd">        :param h: beam thickness</span>
+<span class="sd">        :param L: beam length</span>
+<span class="sd">        :return: p, q, ctrlpts, knotvector_u, knotvector_v</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="mi">2</span>
+
+    <span class="n">ctrlpts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+    <span class="n">ctrlpts</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                        <span class="p">[</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                        <span class="p">[</span><span class="n">L</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]]</span>
+
+    <span class="n">ctrlpts</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="p">[[</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">h</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                        <span class="p">[</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">h</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                        <span class="p">[</span><span class="n">L</span><span class="p">,</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">h</span><span class="p">,</span> <span class="mi">1</span><span class="p">]]</span>
+
+    <span class="n">ctrlpts</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="p">[[</span><span class="mf">0.</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="mf">1.</span><span class="p">],</span>
+                        <span class="p">[</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                        <span class="p">[</span><span class="n">L</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="mf">1.</span><span class="p">]]</span>
+
+    <span class="c1"># Set knot vectors</span>
+    <span class="n">knotvector_u</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="n">knotvector_v</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">p</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">ctrlpts</span><span class="p">,</span> <span class="n">knotvector_u</span><span class="p">,</span> <span class="n">knotvector_v</span></div>
+
+
+<div class="viewcode-block" id="make_beam3"><a class="viewcode-back" href="../index.html#make_geom.make_beam3">[docs]</a><span class="k">def</span> <span class="nf">make_beam3</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="n">h</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Generate a degree 3 beam</span>
+
+<span class="sd">            :param h: beam thickness</span>
+<span class="sd">            :param L: beam length</span>
+<span class="sd">            :return: p, q, ctrlpts, knotvector_u, knotvector_v</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="mi">3</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="mi">3</span>
+
+    <span class="n">w</span> <span class="o">=</span> <span class="mf">0.5</span>
+    <span class="n">ctrlpts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+    <span class="n">ctrlpts</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                        <span class="p">[</span><span class="mf">0.333</span> <span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                        <span class="p">[</span><span class="mf">0.667</span> <span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                        <span class="p">[</span><span class="n">L</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]]</span>
+
+    <span class="n">ctrlpts</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.333</span> <span class="o">*</span> <span class="n">h</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                        <span class="p">[</span><span class="mf">0.333</span> <span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="mf">0.333</span> <span class="o">*</span> <span class="n">h</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                        <span class="p">[</span><span class="mf">0.667</span> <span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="mf">0.333</span> <span class="o">*</span> <span class="n">h</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                        <span class="p">[</span><span class="n">L</span><span class="p">,</span> <span class="mf">0.333</span> <span class="o">*</span> <span class="n">h</span><span class="p">,</span> <span class="mi">1</span><span class="p">]]</span>
+
+    <span class="n">ctrlpts</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.667</span> <span class="o">*</span> <span class="n">h</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                        <span class="p">[</span><span class="mf">0.333</span> <span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="mf">0.667</span> <span class="o">*</span> <span class="n">h</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                        <span class="p">[</span><span class="mf">0.667</span> <span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="mf">0.667</span> <span class="o">*</span> <span class="n">h</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                        <span class="p">[</span><span class="n">L</span><span class="p">,</span> <span class="mf">0.667</span> <span class="o">*</span> <span class="n">h</span><span class="p">,</span> <span class="mi">1</span><span class="p">]]</span>
+
+    <span class="n">ctrlpts</span><span class="p">[:,</span> <span class="mi">3</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">0</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                        <span class="p">[</span><span class="mf">0.333</span> <span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                        <span class="p">[</span><span class="mf">0.667</span> <span class="o">*</span> <span class="n">L</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                        <span class="p">[</span><span class="n">L</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="mi">1</span><span class="p">]]</span>
+
+    <span class="c1"># Set knot vectors</span>
+    <span class="n">knotvector_u</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="n">knotvector_v</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">p</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">ctrlpts</span><span class="p">,</span> <span class="n">knotvector_u</span><span class="p">,</span> <span class="n">knotvector_v</span></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, S.Breumier, O.Lampron.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
