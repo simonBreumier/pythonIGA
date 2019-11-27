@@ -10,7 +10,7 @@ from make_geom import build_BC_surf, load_geom
 from mesh_rule import Gauss_rule
 from plotNurb import plot_nurbs
 from solve import solve_KU
-
+from compute_fields import compute_stress
 
 def make_holeplate(numrefine, disp_solve, plotGrid=""):
     """ Solve the plate with hole problem with linear elasticity
@@ -43,7 +43,7 @@ def make_holeplate(numrefine, disp_solve, plotGrid=""):
     print("Number of elements: "+str(nel))
     nobU = ctrlpts.shape[0]
     nobV = ctrlpts.shape[1]
-    K, F, GP_coord = make_KF(knotvector_u, knotvector_v, ctrlpts, p, q, nel, INC, IEN, gp, gw, nquad, E_coeff, nu_coeff, Fb)
+    K, F, GP_coord, R_quads, dR_quads = make_KF(knotvector_u, knotvector_v, ctrlpts, p, q, nel, INC, IEN, gp, gw, nquad, E_coeff, nu_coeff, Fb)
 
     print("------------------- Assemble boundary conditions")
     print("Dirichlet...")
@@ -79,4 +79,5 @@ def make_holeplate(numrefine, disp_solve, plotGrid=""):
 
     print("------------------- Plotting results")
     to_plot = {"u_x": u[range(0, len(u), 2)], "u_y": u[range(1, len(u), 2)]}
+    sig, eps = compute_stress(to_plot, R_quads, dR_quads, ctrlpts, INC, IEN, E_coeff, nu_coeff, nobU, nobV)
     plot_nurbs(ctrlpts, knotvector_u, knotvector_v, p, q, nel, IEN, to_plot, plotGrid, E_coeff, nu_coeff, disp_solve, numrefine)

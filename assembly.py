@@ -101,7 +101,10 @@ def make_KF(knot_u, knot_v, B, p, q, nel, INC, IEN, gp, gw, nquad, E_coeff, nu_c
 	K_global = np.zeros((2 * npts, 2 * npts))
 	F_global = np.zeros((2 * npts))
 	GP_coord = np.zeros((nel, nquad * nquad, 2))
-	
+
+	R_quads = np.zeros((p+1, q+1, nquad**2, nel))
+	dR_quads = np.zeros((p + 1, q + 1, 2, nquad**2, nel))
+
 	for e in range(0, nel):
 		ni = int(INC[int(IEN[e, 0]), 0])
 		nj = int(INC[int(IEN[e, 0]), 1])
@@ -116,6 +119,8 @@ def make_KF(knot_u, knot_v, B, p, q, nel, INC, IEN, gp, gw, nquad, E_coeff, nu_c
 		for i in range(0, nquad):
 			for j in range(0, nquad):
 				R, dR_dx, J, J_mat, gp_x = build_shapeFun(e, INC, IEN, gp[i], gp[j], knot_u, knot_v, p, q, B)
+				R_quads[:, :, i * nquad + j, e] = R
+				dR_quads[:, :, :, i * nquad + j, e] = dR_dx
 				Jmod = J*gw[i]*gw[j]
 				build_Klocal(dR_dx, Jmod, p, q, K_local, E_coeff, nu_coeff)
 				build_Flocal(R, Jmod, Fb, p, q, F_local)
@@ -131,7 +136,7 @@ def make_KF(knot_u, knot_v, B, p, q, nel, INC, IEN, gp, gw, nquad, E_coeff, nu_c
 						bb = l * (p + 1) + k
 						K_global[2 * int(IEN[e, aa]):2 * int(IEN[e, aa]) + 2,
 						2 * int(IEN[e, bb]):2 * int(IEN[e, bb]) + 2] += K_local[2 * aa:2 * aa + 2, 2 * bb:2 * bb + 2]
-	return K_global, F_global, GP_coord
+	return K_global, F_global, GP_coord, R_quads, dR_quads
 
 
 def build_Klocal(dR_dx, Jmod, p, q, K_local, E, nu):
