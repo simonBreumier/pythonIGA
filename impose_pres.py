@@ -82,13 +82,13 @@ def compute_Fimp_alt(nel, IEN, INC, gp, gw, knot_u, p, ctrlpts_BC, corres_BC, nq
 		F_BC_loc = np.zeros((lendofs))
 		if not(lendofs == 0):			
 			for gp_act in range(0, nquad):	
-				R_BC, J, dx_dtiltexi, dy_dtiltexi = build_shape_BC(e, INC, IEN, gp[gp_act], knot_u, p, ctrlpts_BC)
+				R_BC, J, dx_dtiltexi, dy_dtiltexi, dx_dxi, dy_dxi = build_shape_BC(e, INC, IEN, gp[gp_act], knot_u, p, ctrlpts_BC)
 				Jmod_BC = gw[gp_act]
-				build_F_BC_alt(R_BC, Jmod_BC, p, F_BC_loc, sig_imp, ctrlpts_BC, ni, dx_dtiltexi, dy_dtiltexi, toImpose)
+				build_F_BC_alt(R_BC, Jmod_BC, p, F_BC_loc, sig_imp, ctrlpts_BC, ni, dx_dtiltexi, dy_dtiltexi, toImpose, dx_dxi, dy_dxi)
 
 			F[dof_glob] += F_BC_loc
 					
-def build_F_BC_alt(R_BC, Jmod_BC, p, F_BC_loc, sig_imp, ctrlpts_BC, ni, dx_dtiltexi, dy_dtiltexi, toImpose):
+def build_F_BC_alt(R_BC, Jmod_BC, p, F_BC_loc, sig_imp, ctrlpts_BC, ni, dx_dtiltexi, dy_dtiltexi, toImpose, dx_dxi, dy_dxi):
 	"""Build the local element load vector
 
 	:param R_BC: shape function values at gauss point
@@ -102,14 +102,15 @@ def build_F_BC_alt(R_BC, Jmod_BC, p, F_BC_loc, sig_imp, ctrlpts_BC, ni, dx_dtilt
 	:param toImpose: Node tom impose sig_imp to
 	:return: Nothing but changes F_BC_loc
 	"""
-	norm = np.matrix([dy_dtiltexi, dx_dtiltexi]).T
-	#norm = norm/np.linalg.norm(norm)
-	sigmaNorm = np.array(np.dot(sig_imp, norm).T.tolist()[0])
+	norm = np.matrix([-dy_dtiltexi, dx_dtiltexi]).T
+	norm = norm/np.linalg.norm(norm)
+	#print(str(dx_dxi)+", "+str(dy_dxi))
+	sigmaNorm = np.array((sig_imp[0,0]*norm).T.tolist()[0])
 	for i in range(0, p+1):
 		if ni-i in toImpose:
 		#if ctrlpts_BC[i,0] == -4.:
-			F_BC_loc[2*i:2*i+2] += R_BC[i]*Jmod_BC*sigmaNorm
-			#F_BC_loc[2 * i] += R_BC[i] * Jmod_BC * sig_imp[0,0]*abs(dy_dtiltexi)
+			#F_BC_loc[2*i:2*i+2] += R_BC[i]*Jmod_BC*sigmaNorm
+			F_BC_loc[2 * i] += R_BC[i] * Jmod_BC * sig_imp[0,0]*(-dy_dtiltexi)
 		#if ctrlpts_BC[ni-i,1] == 4.0:
 			# F_BC_loc[2*i] += sig_imp*R_BC[i]*Jmod_BC	
 		#	F_BC_loc[2*i+1] -= sig_imp*R_BC[i]*Jmod_BC*abs(dx_dtiltexi)
@@ -144,9 +145,9 @@ def build_shape_BC(e, INC, IEN, xi_tilde, BC_knot, p, B):
 	
 	for i in range(0,p+1):
 		loc_num += 1
-		R[i] = dN[0,p-i]*B[ni-i,2]
+		R[i] = dN[0,p - i]*B[ni-i,2]
 		sum_tot += R[i]
-		dR_dxi[i,0] = dN[1,p-i]*B[ni-i,2]
+		dR_dxi[i,0] = dN[1,p - i]*B[ni-i,2]#############
 		sum_xi += dR_dxi[i,0]	
 
 	for i in range(0, p+1):
@@ -156,12 +157,11 @@ def build_shape_BC(e, INC, IEN, xi_tilde, BC_knot, p, B):
 	for i in range(0, p+1):
 		dx_dxi = dx_dxi + B[ni-i, 0]*dR_dxi[i,0]
 		dy_dxi = dy_dxi + B[ni-i, 1]*dR_dxi[i,0]
-
 	dxi_dtildexi = 0.5*(BC_knot[ni+1] - BC_knot[ni])
-	
+
 	dx_dtiltexi = dx_dxi * dxi_dtildexi
 	dy_dtiltexi = dy_dxi * dxi_dtildexi
 
 	J = math.sqrt(dx_dtiltexi**2+dy_dtiltexi**2)
-	
-	return R, J, dx_dtiltexi, dy_dtiltexi
+	print(str(dy_dtiltexi)+" "+str(dx_dtiltexi))
+	return R, J, dx_dtiltexi, dy_dtiltexi, dx_dxi, dy_dxi

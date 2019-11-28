@@ -43,6 +43,8 @@ def make_holeplate(numrefine, disp_solve, plotGrid=""):
     print("Number of elements: "+str(nel))
     nobU = ctrlpts.shape[0]
     nobV = ctrlpts.shape[1]
+    print("Number of nodes in U dir.: "+str(nobU))
+    print("Number of nodes in V dir.: " + str(nobV))
     K, F, GP_coord, R_quads, dR_quads = make_KF(knotvector_u, knotvector_v, ctrlpts, p, q, nel, INC, IEN, gp, gw, nquad, E_coeff, nu_coeff, Fb)
 
     print("------------------- Assemble boundary conditions")
@@ -71,7 +73,7 @@ def make_holeplate(numrefine, disp_solve, plotGrid=""):
         if BC_ctrlpts[i,0] == -L:
             toImpose.append(i)
 
-    sig_imp = np.matrix([[-10, 0.], [0., 0.]])
+    sig_imp = np.matrix([[10, 0.], [0., 0.]])
     compute_Fimp_alt(nel_BC, IEN_BC, INC_BC, gp, gw, BC_knot, p, BC_ctrlpts, BC_corres, nquad, sig_imp, F, toImpose)
 
     print("------------------- Solving system (get a cup of coffee ;) )")
@@ -79,5 +81,9 @@ def make_holeplate(numrefine, disp_solve, plotGrid=""):
 
     print("------------------- Plotting results")
     to_plot = {"u_x": u[range(0, len(u), 2)], "u_y": u[range(1, len(u), 2)]}
-    sig, eps = compute_stress(to_plot, R_quads, dR_quads, ctrlpts, INC, IEN, E_coeff, nu_coeff, nobU, nobV)
+    X, Y, sig, eps = compute_stress(to_plot, R_quads, dR_quads, ctrlpts, INC, IEN, E_coeff, nu_coeff, nobU, nobV)
+    sigxx = np.reshape(sig[0, 0], (nel * nquad * nquad))
+    sigyy = np.reshape(sig[1, 1], (nel * nquad * nquad))
+    sigxy = np.reshape(sig[1, 0], (nel * nquad * nquad))
+    np.savetxt("stress_GP_"+str(numrefine), np.array([X, Y, sigxx, sigyy, sigxy]).T)
     plot_nurbs(ctrlpts, knotvector_u, knotvector_v, p, q, nel, IEN, to_plot, plotGrid, E_coeff, nu_coeff, disp_solve, numrefine)

@@ -83,6 +83,19 @@ def lookuptablespan(knotVector, k, plotVector, s):
     tablespan[indexActu] = left - 1
     return tablespan
 
+def FindSpan(n, p, u, U):
+    if u == U[n + 1]:
+        return n
+    low = p
+    high = n+1
+    mid = (low + high) / 2
+    while u < U[mid] or u >= U[mid + 1]:
+        if u < U[mid]:
+            high = mid
+        else:
+            low = mid
+        mid = (low+high)/2
+    return mid
 
 def BasisFun(i, u, p, U):
     """

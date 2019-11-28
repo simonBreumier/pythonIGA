@@ -1,5 +1,6 @@
 import math
 import numpy as np
+import matplotlib.pyplot as plt
 
 def compute_stress(toPlot, R_quads, dR_quads, B, INC, IEN, E_coeff, nu_coeff, nobU, nobV):
     """
@@ -15,7 +16,10 @@ def compute_stress(toPlot, R_quads, dR_quads, B, INC, IEN, E_coeff, nu_coeff, no
     q = q-1
     p = p-1
     nquad = int(math.sqrt(nquadsquare))
+    x = np.zeros((nel, nquad, nquad))
+    y = np.zeros((nel, nquad, nquad))
     eps = np.zeros((2, 2, nel, nquad, nquad))
+    sig = np.zeros((2, 2, nel, nquad, nquad))
     for e in range(0, nel):
         ni = int(INC[int(IEN[e, 0]), 0])
         nj = int(INC[int(IEN[e, 0]), 1])
@@ -27,8 +31,8 @@ def compute_stress(toPlot, R_quads, dR_quads, B, INC, IEN, E_coeff, nu_coeff, no
                     for j in range(0, q+1):
                         i_CP = ni - i
                         j_CP = nj - j
-                        x_actu += R_quads[i, j, gpi * nquad + gpj, e] * B[i_CP, j_CP, 0]
-                        y_actu += R_quads[i, j, gpi * nquad + gpj, e] * B[i_CP, j_CP, 1]
+                        x[e, gpi, gpj] += R_quads[i, j, gpi * nquad + gpj, e] * B[i_CP, j_CP, 0]
+                        y[e, gpi, gpj] += R_quads[i, j, gpi * nquad + gpj, e] * B[i_CP, j_CP, 1]
                         eps[0, 0, e, gpi, gpj] += float(toPlot["u_x"][j_CP * nobU + i_CP]) * dR_quads[i, j, 0, gpi * nquad + gpj, e]
                         eps[1, 1, e, gpi, gpj] += float(toPlot["u_y"][j_CP * nobU + i_CP]) * dR_quads[i, j, 1, gpi * nquad + gpj, e]
                         eps[0, 1, e, gpi, gpj] += 0.5 * (float(toPlot["u_x"][j_CP * nobU + i_CP]) * dR_quads[i, j, 1, gpi * nquad + gpj, e] + float(
@@ -36,14 +40,11 @@ def compute_stress(toPlot, R_quads, dR_quads, B, INC, IEN, E_coeff, nu_coeff, no
                         eps[1, 0, e, gpi, gpj] += 0.5 * (float(toPlot["u_x"][j_CP * nobU + i_CP]) * dR_quads[i, j, 1, gpi * nquad + gpj, e] + float(
                             toPlot["u_y"][j_CP * nobU + i_CP]) * dR_quads[i, j, 0, gpi * nquad + gpj, e])
 
-                sig = np.zeros((2, 2, nel, nquad, nquad))
                 coef = E_coeff / (1 - nu_coeff ** 2)
                 sig[0, 0, e, gpi, gpj] = coef * (eps[0, 0, e, gpi, gpj] + nu_coeff * eps[1, 1, e, gpi, gpj])
                 sig[1, 1, e, gpi, gpj] = coef * (eps[1, 1, e, gpi, gpj] + nu_coeff * eps[0, 0, e, gpi, gpj])
                 sig[0, 1, e, gpi, gpj] = coef * (1 - nu_coeff) * eps[0, 1, e, gpi, gpj]
                 sig[1, 0, e, gpi, gpj] = coef * (1 - nu_coeff) * eps[1, 0, e, gpi, gpj]
-    sigxx = np.reshape(sig[0, 0], (nel * nquad * nquad))
-    sigyy = np.reshape(sig[1, 1], (nel * nquad * nquad))
-    sigxy = np.reshape(sig[1, 0], (nel * nquad * nquad))
-    np.savetxt("stress_GP", np.array([sigxx, sigyy, sigxy]).T)
-    return sig, eps
+    X = np.reshape(x, (nel * nquad * nquad))
+    Y = np.reshape(y, (nel * nquad * nquad))
+    return X,Y, sig, eps
